@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Search, Users, AlertCircle, Loader } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
 export function AllArtistsPage() {
+  const navigate = useNavigate();
   const [allArtists, setAllArtists] = useState<Artist[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -42,7 +44,7 @@ export function AllArtistsPage() {
   });
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Header */}
       <div>
         <h2 className="text-white text-2xl mb-4">All Artists</h2>
@@ -87,6 +89,12 @@ export function AllArtistsPage() {
               <Card
                 key={artist.pk}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
+                onClick={() => {
+                  const artistId = artist.pk?.split('#')[1];
+                  if (artistId) {
+                    navigate(`/artists/${artistId}`);
+                  }
+                }}
               >
                 <CardContent className="p-3">
                   <div className="flex flex-col items-center gap-3">

@@ -9,6 +9,7 @@ import { SearchPage } from './components/user/SearchPage';
 import { AllSongsPage } from './components/user/AllSongsPage';
 import { AllAlbumsPage } from './components/user/AllAlbumsPage';
 import { AllArtistsPage } from './components/user/AllArtistsPage';
+import { ArtistDetailPage } from './components/user/ArtistDetailPage';
 import { NotificationsPage } from './components/user/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -43,6 +44,10 @@ export const router = createBrowserRouter([
   {
     path: '/artists',
     element: <AllArtistsPage />,
+  },
+  {
+    path: '/artists/:artistId',
+    element: <ArtistDetailPage />,
   },
   {
     path: '/library',

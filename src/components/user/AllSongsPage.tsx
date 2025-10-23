@@ -58,7 +58,7 @@ export function AllSongsPage({ onPlaySong }: AllSongsPageProps) {
   });
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Header */}
       <div>
         <h2 className="text-white text-2xl mb-4">All Songs</h2>

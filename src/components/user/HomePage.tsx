@@ -29,7 +29,7 @@ export function HomePage({ onPlaySong }: HomePageProps) {
 
         const [songsData, albumsData, artistsData] = await Promise.all([
           getSongs(5),
-          getAlbums(5),
+          getAlbums(6),
           getArtists(5),
         ]);
 
@@ -63,7 +63,7 @@ export function HomePage({ onPlaySong }: HomePageProps) {
   };
 
   const content = (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       {/* Hero Section */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 p-8 md:p-12">
         <div className="relative z-10">
@@ -216,6 +216,12 @@ export function HomePage({ onPlaySong }: HomePageProps) {
               <Card
                 key={artist.pk}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
+                onClick={() => {
+                  const artistId = artist.pk?.split('#')[1];
+                  if (artistId) {
+                    navigate(`/artists/${artistId}`);
+                  }
+                }}
               >
                 <CardContent className="p-3">
                   <div className="flex flex-col items-center gap-3">

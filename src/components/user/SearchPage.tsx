@@ -89,7 +89,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   ).sort();
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Search Header */}
       <div>
         <h2 className="text-white text-2xl mb-4">Search & Discover</h2>
