@@ -8,13 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/badge';
 import { Edit, Trash2, Music, Upload, Play, AlertCircle, Loader } from 'lucide-react';
 import { getSongs, getAlbums, createSong, updateSong, deleteSong } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Song, Album } from '../../types/music';
 import { toast } from 'sonner';
 
-// Mock access token - в реальном приложении это будет из AuthContext
-const MOCK_ACCESS_TOKEN = 'mock-token-for-development';
-
 export function SongsManagement() {
+  const { accessToken } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -85,6 +84,11 @@ export function SongsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!accessToken) {
+      toast.error('You must be logged in to perform this action');
+      return;
+    }
+
     if (!formData.title || !formData.artist || !formData.duration || !formData.album_id) {
       toast.error('Please fill in all required fields');
       return;
@@ -102,13 +106,13 @@ export function SongsManagement() {
       };
 
       if (editingSong) {
-        const result = await updateSong(editingSong.song_id, requestData, MOCK_ACCESS_TOKEN);
+        const result = await updateSong(editingSong.song_id, requestData, accessToken);
         setSongs(prev =>
           prev.map(s => (s.song_id === editingSong.song_id ? result.song : s))
         );
         toast.success('Song updated successfully');
       } else {
-        const result = await createSong(requestData, MOCK_ACCESS_TOKEN);
+        const result = await createSong(requestData, accessToken);
         setSongs(prev => [...prev, result.song]);
         toast.success('Song created successfully');
       }
@@ -125,12 +129,17 @@ export function SongsManagement() {
   };
 
   const handleDelete = async (song: Song) => {
+    if (!accessToken) {
+      toast.error('You must be logged in to perform this action');
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete "${song.title}"?`)) {
       return;
     }
 
     try {
-      await deleteSong(song.song_id, MOCK_ACCESS_TOKEN);
+      await deleteSong(song.song_id, accessToken);
       setSongs(prev => prev.filter(s => s.song_id !== song.song_id));
       toast.success('Song deleted successfully');
     } catch (err) {

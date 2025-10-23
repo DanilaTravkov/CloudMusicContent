@@ -5,6 +5,7 @@ export interface User {
   username: string;
   role: UserRole;
   name?: string;
+  email?: string;
 }
 
 export interface AuthContextType {
@@ -14,4 +15,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
+  accessToken?: string;
+  idToken?: string;
+  refreshToken?: string;
 }
