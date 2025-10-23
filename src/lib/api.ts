@@ -116,11 +116,7 @@ export async function createSong(
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to create song: ${response.statusText}`);
-  }
-
-  return response.json();
+  return handleResponse<SingleSongResponse>(response);
 }
 
 /**
@@ -146,11 +142,7 @@ export async function updateSong(
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to update song: ${response.statusText}`);
-  }
-
-  return response.json();
+  return handleResponse<SingleSongResponse>(response);
 }
 
 /**
@@ -166,7 +158,7 @@ export async function deleteSong(songId: string, accessToken: string): Promise<v
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete song: ${response.statusText}`);
+    await handleResponse<never>(response); // Will throw appropriate error
   }
 }
 
@@ -260,11 +252,7 @@ export async function createAlbum(
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to create album: ${response.statusText}`);
-  }
-
-  return response.json();
+  return handleResponse<SingleAlbumResponse>(response);
 }
 
 /**
@@ -292,11 +280,7 @@ export async function updateAlbum(
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to update album: ${response.statusText}`);
-  }
-
-  return response.json();
+  return handleResponse<SingleAlbumResponse>(response);
 }
 
 /**
@@ -312,6 +296,6 @@ export async function deleteAlbum(albumId: string, accessToken: string): Promise
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to delete album: ${response.statusText}`);
+    await handleResponse<never>(response); // Will throw appropriate error
   }
 }
