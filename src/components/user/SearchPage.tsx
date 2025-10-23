@@ -88,7 +88,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   ).sort();
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Search Header */}
       <div>
         <h2 className="text-white text-2xl mb-4">Search & Discover</h2>
@@ -247,7 +247,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                       <Music className="size-6 text-white" />
                     </div>                    <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate">{song.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{song.artist_name}</p>
+                      <p className="text-purple-300 text-sm truncate">{song.artist_name || song.artist}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-purple-300 text-sm">

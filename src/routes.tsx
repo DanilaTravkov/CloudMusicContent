@@ -7,6 +7,11 @@ import { UserDashboard } from './components/UserDashboard';
 import { HomePage } from './components/user/HomePage';
 import { LibraryPage } from './components/user/LibraryPage';
 import { SearchPage } from './components/user/SearchPage';
+import { AllSongsPage } from './components/user/AllSongsPage';
+import { AllAlbumsPage } from './components/user/AllAlbumsPage';
+import { AllArtistsPage } from './components/user/AllArtistsPage';
+import { ArtistDetailPage } from './components/user/ArtistDetailPage';
+import { AlbumDetailPage } from './components/user/AlbumDetailPage';
 import { NotificationsPage } from './components/user/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { UnauthorizedRoute } from './components/UnauthorizedRoute';
@@ -45,6 +50,26 @@ export const router = createBrowserRouter([
   },  {
     path: '/search',
     element: <SearchPage />,
+  },
+  {
+    path: '/songs',
+    element: <AllSongsPage />,
+  },
+  {
+    path: '/albums',
+    element: <AllAlbumsPage />,
+  },
+  {
+    path: '/albums/:albumId',
+    element: <AlbumDetailPage />,
+  },
+  {
+    path: '/artists',
+    element: <AllArtistsPage />,
+  },
+  {
+    path: '/artists/:artistId',
+    element: <ArtistDetailPage />,
   },
   {
     path: '/library',
