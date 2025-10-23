@@ -133,7 +133,14 @@ export function HomePage({ onPlaySong }: HomePageProps) {
                         <Play className="size-3 fill-current" />
                       </Button>
                     </div>
-                  </div>
+                    <Button
+                      size="sm"
+                      className="absolute bottom-2 right-2 size-10 rounded-full bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <Play className="size-4 fill-current" />
+                    </Button>                  </div>
+                  <h4 className="text-white truncate mb-1">{song.title}</h4>
+                  <p className="text-purple-300 text-sm truncate">{song.artist_name}</p>
                 </CardContent>
               </Card>
             ))}
@@ -173,10 +180,9 @@ export function HomePage({ onPlaySong }: HomePageProps) {
                       ) : (
                         <Music className="size-10 text-white" />
                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    </div>                    <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate mb-1">{album.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{album.artist}</p>
+                      <p className="text-purple-300 text-sm truncate">{album.artist_name}</p>
                       <div className="flex flex-wrap gap-1 mt-2">
                         <Badge variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
                           {album.genre}

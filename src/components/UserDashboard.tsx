@@ -31,7 +31,6 @@ export function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col">
-      {/* Header */}
       <header className="bg-black/40 backdrop-blur-lg border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -55,7 +54,6 @@ export function UserDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-6 pb-32">
         {currentView === 'home' && <HomePage onPlaySong={handlePlaySong} />}
         {currentView === 'search' && <SearchPage onPlaySong={handlePlaySong} />}
@@ -63,7 +61,6 @@ export function UserDashboard() {
         {currentView === 'notifications' && <NotificationsPage />}
       </div>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-black/60 backdrop-blur-lg border-t border-white/10 pb-safe">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-around py-3">
@@ -119,7 +116,6 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {/* Music Player */}
       {currentSong && (
         <MusicPlayer
           song={currentSong}

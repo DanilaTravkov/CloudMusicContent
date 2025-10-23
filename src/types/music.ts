@@ -23,7 +23,8 @@ export interface Album {
   sk: string;
   album_id: string;
   title: string;
-  artist: string;
+  artist_id: string;
+  artist_name: string;
   release_date: string;
   genre: string;
   description: string;
