@@ -11,6 +11,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ onPlaySong }: HomePageProps) {
+
   const getArtistNames = (artistIds: string[]) => {
     return artistIds
       .map(id => mockArtists.find(a => a.id === id)?.name)
