@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -18,6 +18,19 @@ export function LoginPage() {
   const location = useLocation();
   
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Handle registration success message
+  useEffect(() => {
+    if (location.state?.message) {
+      toast.success(location.state.message);
+      // Pre-fill username if provided
+      if (location.state.username) {
+        setUsername(location.state.username);
+      }
+      // Clear the state to prevent showing the message again
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
