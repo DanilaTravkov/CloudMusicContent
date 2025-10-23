@@ -58,12 +58,11 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       console.log('Playing song:', song.title);
     }
   };
-
   // Filter content based on search query
   const filteredSongs = allSongs.filter(song => {
     const matchesSearch = !searchQuery || 
       (song.title && song.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (song.artist_name && song.artist_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (song.genre && song.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
@@ -71,7 +70,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   const filteredAlbums = allAlbums.filter(album => {
     const matchesSearch = !searchQuery || 
       (album.title && album.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (album.artist && album.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (album.artist_name && album.artist_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (album.genre && album.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
@@ -89,7 +88,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   ).sort();
 
   const content = (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Search Header */}
       <div>
         <h2 className="text-white text-2xl mb-4">Search & Discover</h2>
@@ -165,10 +164,9 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                       ) : (
                         <Music className="size-10 text-white" />
                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    </div>                    <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate mb-1">{album.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{album.artist}</p>
+                      <p className="text-purple-300 text-sm truncate">{album.artist_name}</p>
                       <p className="text-purple-400 text-xs mt-1">{album.total_songs} tracks</p>
                     </div>
                     <Button
@@ -247,10 +245,9 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                     <span className="text-purple-400 w-6 text-center">{index + 1}</span>
                     <div className="size-12 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                       <Music className="size-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    </div>                    <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate">{song.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{song.artist}</p>
+                      <p className="text-purple-300 text-sm truncate">{song.artist_name || song.artist}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-purple-300 text-sm">

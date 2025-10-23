@@ -61,10 +61,9 @@ export function AlbumsManagement() {
 
   const handleOpenDialog = (album?: Album) => {
     if (album) {
-      setEditingAlbum(album);
-      setFormData({
+      setEditingAlbum(album);      setFormData({
         title: album.title,
-        artist: album.artist,
+        artist: album.artist_name, // Use artist_name from the API response
         release_date: album.release_date || '',
         genre: album.genre || '',
         description: album.description || '',
@@ -296,10 +295,9 @@ export function AlbumsManagement() {
                     ) : (
                       <Disc3 className="size-10 text-white" />
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
+                  </div>                  <div className="flex-1 min-w-0">
                     <CardTitle className="text-white truncate">{album.title}</CardTitle>
-                    <p className="text-purple-300 text-sm mt-1">{album.artist}</p>
+                    <p className="text-purple-300 text-sm mt-1">{album.artist_name}</p>
                     <p className="text-purple-400 text-xs mt-1">
                       {new Date(album.release_date).toLocaleDateString()}
                     </p>

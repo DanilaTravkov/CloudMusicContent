@@ -5,6 +5,7 @@ import type {
   SingleSongResponse,
   SingleAlbumResponse,
   AlbumSongsResponse,
+  Artist,
 } from '../types/music';
 
 const API_GATEWAY = import.meta.env.VITE_API_GATEWAY as string;
@@ -325,4 +326,61 @@ export async function getArtists(limit: number = 20, lastKey?: string): Promise<
   });
 
   return handleResponse<ArtistsResponse>(response);
+}
+
+/**
+ * Получить конкретного артиста по ID
+ * GET /artists/{artistId}
+ */
+export async function getArtistById(artistId: string): Promise<{ message: string; artist: Artist }> {
+  const response = await fetch(`${API_GATEWAY}/artists/${artistId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return handleResponse<{ message: string; artist: Artist }>(response);
+}
+
+/**
+ * Получить все песни артиста
+ * GET /artists/{artistId}/songs
+ */
+export async function getSongsByArtist(artistId: string, limit: number = 20, lastKey?: string): Promise<AlbumSongsResponse> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  if (lastKey) {
+    params.append('last_key', lastKey);
+  }
+
+  const response = await fetch(`${API_GATEWAY}/artists/${artistId}/songs?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return handleResponse<AlbumSongsResponse>(response);
+}
+
+/**
+ * Получить все альбомы артиста
+ * GET /artists/{artistId}/albums
+ */
+export async function getAlbumsByArtist(artistId: string, limit: number = 20, lastKey?: string): Promise<AlbumsResponse> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  if (lastKey) {
+    params.append('last_key', lastKey);
+  }
+
+  const response = await fetch(`${API_GATEWAY}/artists/${artistId}/albums?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return handleResponse<AlbumsResponse>(response);
 }

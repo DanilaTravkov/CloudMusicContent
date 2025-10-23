@@ -72,18 +72,15 @@ export function RegisterPage() {
         given_name: registerData.given_name,
         family_name: registerData.family_name,
         birthdate: registerData.birthdate
-      });
-
-      const response = await register(registerData);
+      });      const response = await register(registerData);
       
       console.log('Registration successful:', response);
-      toast.success('Registration successful! Please check your email for verification instructions.');
+      toast.success('Registration successful! Please check your email for the verification code.');
       
-      // Redirect to login page after successful registration
-      navigate('/login', { 
+      // Redirect to email confirmation page with user data
+      navigate('/confirm-email', { 
         state: { 
-          message: 'Registration successful! Please verify your email before signing in.',
-          username: formData.username 
+          userData: registerData
         }
       });
       
