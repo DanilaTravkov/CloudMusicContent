@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
+import { ConfirmEmailPage } from './components/ConfirmEmailPage';
 import { AdminDashboard } from './components/AdminDashboard';
 import { UserDashboard } from './components/UserDashboard';
 import { HomePage } from './components/user/HomePage';
@@ -8,6 +9,7 @@ import { LibraryPage } from './components/user/LibraryPage';
 import { SearchPage } from './components/user/SearchPage';
 import { NotificationsPage } from './components/user/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { UnauthorizedRoute } from './components/UnauthorizedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -16,11 +18,26 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <UnauthorizedRoute avoidRoles={['admin', 'authorized']}>
+        <LoginPage />
+      </UnauthorizedRoute>
+    )
+  },  {
+    path: '/register',
+    element: (
+      <UnauthorizedRoute avoidRoles={['admin', 'authorized']}>
+        <RegisterPage />
+      </UnauthorizedRoute>
+    ),
   },
   {
-    path: '/register',
-    element: <RegisterPage />,
+    path: '/confirm-email',
+    element: (
+      <UnauthorizedRoute avoidRoles={['admin', 'authorized']}>
+        <ConfirmEmailPage />
+      </UnauthorizedRoute>
+    )
   },
   {
     path: '/home',
