@@ -59,17 +59,17 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   // Filter content based on search query
   const filteredSongs = allSongs.filter(song => {
     const matchesSearch = !searchQuery || 
-      song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      song.genre.toLowerCase().includes(searchQuery.toLowerCase());
+      (song.title && song.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (song.genre && song.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
 
   const filteredAlbums = allAlbums.filter(album => {
     const matchesSearch = !searchQuery || 
-      album.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      album.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      album.genre.toLowerCase().includes(searchQuery.toLowerCase());
+      (album.title && album.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (album.artist && album.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (album.genre && album.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
 
