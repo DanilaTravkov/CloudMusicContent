@@ -63,7 +63,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
   const filteredSongs = allSongs.filter(song => {
     const matchesSearch = !searchQuery || 
       (song.title && song.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (song.artist && song.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      ((song.artist_name || song.artist) && (song.artist_name || song.artist)!.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (song.genre && song.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
@@ -250,7 +250,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate">{song.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{song.artist}</p>
+                      <p className="text-purple-300 text-sm truncate">{song.artist_name || song.artist}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-purple-300 text-sm">

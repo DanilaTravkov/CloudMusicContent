@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Play, Music, AlertCircle, Loader } from 'lucide-react';
-import { getSongs, getAlbums } from '../../lib/api';
-import type { Song, Album } from '../../types/music';
+import { Play, Music, AlertCircle, Loader, Users } from 'lucide-react';
+import { getSongs, getAlbums, getArtists } from '../../lib/api';
+import type { Song, Album, Artist } from '../../types/music';
 import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
@@ -13,8 +14,10 @@ interface HomePageProps {
 }
 
 export function HomePage({ onPlaySong }: HomePageProps) {
+  const navigate = useNavigate();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,13 +27,15 @@ export function HomePage({ onPlaySong }: HomePageProps) {
         setIsLoading(true);
         setError(null);
 
-        const [songsData, albumsData] = await Promise.all([
+        const [songsData, albumsData, artistsData] = await Promise.all([
           getSongs(5),
           getAlbums(5),
+          getArtists(5),
         ]);
 
         setSongs(songsData.songs);
         setAlbums(albumsData.albums);
+        setArtists(artistsData.artists);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
         setError(errorMessage);
@@ -96,7 +101,11 @@ export function HomePage({ onPlaySong }: HomePageProps) {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white text-2xl">Recently Added</h3>
-            <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
+            <Button 
+              variant="ghost" 
+              className="text-purple-300 hover:text-white hover:bg-white/10"
+              onClick={() => navigate('/songs')}
+            >
               View All
             </Button>
           </div>
@@ -105,22 +114,26 @@ export function HomePage({ onPlaySong }: HomePageProps) {
               <Card
                 key={song.song_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
-                onClick={() => handlePlaySong(song)}
               >
-                <CardContent className="p-4">
-                  <div className="relative mb-3">
-                    <div className="aspect-square rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
-                      <Music className="size-12 text-white" />
+                <CardContent className="p-3">
+                  <div className="flex flex-col gap-3">
+                    <div className="size-16 rounded-lg bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
+                      <Music className="size-8 text-white" />
                     </div>
-                    <Button
-                      size="sm"
-                      className="absolute bottom-2 right-2 size-10 rounded-full bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                    >
-                      <Play className="size-4 fill-current" />
-                    </Button>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-white truncate text-sm font-medium">{song.title}</h4>
+                        <p className="text-purple-300 text-xs truncate">{song.artist_name || song.artist}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-purple-600 hover:bg-purple-700 rounded-full size-8 flex-shrink-0"
+                        onClick={() => handlePlaySong(song)}
+                      >
+                        <Play className="size-3 fill-current" />
+                      </Button>
+                    </div>
                   </div>
-                  <h4 className="text-white truncate mb-1">{song.title}</h4>
-                  <p className="text-purple-300 text-sm truncate">{song.artist}</p>
                 </CardContent>
               </Card>
             ))}
@@ -133,7 +146,11 @@ export function HomePage({ onPlaySong }: HomePageProps) {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white text-2xl">Featured Albums</h3>
-            <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
+            <Button 
+              variant="ghost" 
+              className="text-purple-300 hover:text-white hover:bg-white/10"
+              onClick={() => navigate('/albums')}
+            >
               View All
             </Button>
           </div>
@@ -181,8 +198,50 @@ export function HomePage({ onPlaySong }: HomePageProps) {
         </section>
       )}
 
+      {/* Featured Artists */}
+      {!isLoading && artists.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white text-2xl">Featured Artists</h3>
+            <Button 
+              variant="ghost" 
+              className="text-purple-300 hover:text-white hover:bg-white/10"
+              onClick={() => navigate('/artists')}
+            >
+              View All
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {artists.map(artist => (
+              <Card
+                key={artist.pk}
+                className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <CardContent className="p-3">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="size-16 rounded-full bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
+                      {artist.image_url ? (
+                        <img src={artist.image_url} alt={artist.name} className="size-full object-cover" />
+                      ) : (
+                        <Users className="size-8 text-white" />
+                      )}
+                    </div>
+                    <div className="text-center min-w-0">
+                      <h4 className="text-white truncate text-sm font-medium">{artist.name}</h4>
+                      {artist.total_albums && (
+                        <p className="text-purple-400 text-xs">{artist.total_albums} albums</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* No Data */}
-      {!isLoading && songs.length === 0 && albums.length === 0 && !error && (
+      {!isLoading && songs.length === 0 && albums.length === 0 && artists.length === 0 && !error && (
         <div className="text-center py-12">
           <Music className="size-16 text-purple-500 mx-auto mb-4" />
           <h3 className="text-white text-xl mb-2">No music available</h3>

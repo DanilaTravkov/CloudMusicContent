@@ -5,13 +5,15 @@ export interface Song {
   sk: string;
   song_id: string;
   title: string;
-  artist: string;
+  artist?: string; // может быть не в ответе
+  artist_name?: string; // новое поле из бэка
+  artist_id?: string;
   duration: string | number; // API возвращает строку, но может быть число
-  album: string; // например "Unknown" или название альбома
+  album?: string; // например "Unknown" или название альбома
   album_id?: string; // если указано
-  genre: string;
-  s3_key: string;
-  audio_url: string;
+  genre?: string;
+  s3_key?: string;
+  audio_url?: string;
   created_at: string;
   updated_at: string;
 }

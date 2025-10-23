@@ -6,6 +6,9 @@ import { UserDashboard } from './components/UserDashboard';
 import { HomePage } from './components/user/HomePage';
 import { LibraryPage } from './components/user/LibraryPage';
 import { SearchPage } from './components/user/SearchPage';
+import { AllSongsPage } from './components/user/AllSongsPage';
+import { AllAlbumsPage } from './components/user/AllAlbumsPage';
+import { AllArtistsPage } from './components/user/AllArtistsPage';
 import { NotificationsPage } from './components/user/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -28,6 +31,18 @@ export const router = createBrowserRouter([
   },  {
     path: '/search',
     element: <SearchPage />,
+  },
+  {
+    path: '/songs',
+    element: <AllSongsPage />,
+  },
+  {
+    path: '/albums',
+    element: <AllAlbumsPage />,
+  },
+  {
+    path: '/artists',
+    element: <AllArtistsPage />,
   },
   {
     path: '/library',

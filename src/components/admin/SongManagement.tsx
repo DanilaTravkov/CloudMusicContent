@@ -70,10 +70,10 @@ export function SongsManagement() {
       setEditingSong(song);
       setFormData({
         title: song.title,
-        artist: song.artist,
+        artist: song.artist_name || song.artist || '',
         duration: String(song.duration),
         album_id: song.album_id || '',
-        genre: song.genre,
+        genre: song.genre || '',
       });
     } else {
       resetForm();
@@ -312,7 +312,7 @@ export function SongsManagement() {
 
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white truncate">{song.title}</h3>
-                    <p className="text-purple-300 text-sm">{song.artist}</p>
+                    <p className="text-purple-300 text-sm">{song.artist_name || song.artist}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge variant="secondary" className="text-xs bg-indigo-900/50 text-indigo-200">
                         {getAlbumTitle(song.album_id)}
