@@ -13,7 +13,7 @@ import type { Song, Album } from '../../types/music';
 import { toast } from 'sonner';
 
 export function SongsManagement() {
-  const { accessToken } = useAuth();
+  const { accessToken, idToken } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -129,7 +129,7 @@ export function SongsManagement() {
   };
 
   const handleDelete = async (song: Song) => {
-    if (!accessToken) {
+    if (!idToken || !accessToken) {
       toast.error('You must be logged in to perform this action');
       return;
     }
@@ -139,7 +139,7 @@ export function SongsManagement() {
     }
 
     try {
-      await deleteSong(song.song_id, accessToken);
+      await deleteSong(song.song_id, idToken);
       setSongs(prev => prev.filter(s => s.song_id !== song.song_id));
       toast.success('Song deleted successfully');
     } catch (err) {
