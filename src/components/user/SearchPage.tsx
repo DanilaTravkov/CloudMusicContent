@@ -3,9 +3,9 @@ import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Search, Music, Play, AlertCircle, Loader } from 'lucide-react';
-import { getSongs, getAlbums } from '../../lib/api';
-import type { Song, Album } from '../../types/music';
+import { Search, Music, Play, AlertCircle, Loader, Users } from 'lucide-react';
+import { getSongs, getAlbums, getArtists } from '../../lib/api';
+import type { Song, Album, Artist } from '../../types/music';
 import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ interface SearchPageProps {
 export function SearchPage({ onPlaySong }: SearchPageProps) {
   const [allSongs, setAllSongs] = useState<Song[]>([]);
   const [allAlbums, setAllAlbums] = useState<Album[]>([]);
+  const [allArtists, setAllArtists] = useState<Artist[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,13 +28,15 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
         setIsLoading(true);
         setError(null);
 
-        const [songsData, albumsData] = await Promise.all([
+        const [songsData, albumsData, artistsData] = await Promise.all([
           getSongs(100), // Load more for searching
           getAlbums(100),
+          getArtists(100),
         ]);
 
         setAllSongs(songsData.songs);
         setAllAlbums(albumsData.albums);
+        setAllArtists(artistsData.artists);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
         setError(errorMessage);
@@ -70,6 +73,13 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       (album.title && album.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (album.artist && album.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (album.genre && album.genre.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesSearch;
+  });
+
+  const filteredArtists = allArtists.filter(artist => {
+    const matchesSearch = !searchQuery || 
+      (artist.name && artist.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (artist.bio && artist.bio.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
 
@@ -181,6 +191,44 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
         </section>
       )}
 
+      {/* Artists Results */}
+      {!isLoading && filteredArtists.length > 0 && (
+        <section>
+          <h3 className="text-white text-xl mb-3">
+            Artists {searchQuery && `matching "${searchQuery}"`}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredArtists.map(artist => (
+              <Card
+                key={artist.pk}
+                className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                      {artist.image_url ? (
+                        <img src={artist.image_url} alt={artist.name} className="size-full object-cover" />
+                      ) : (
+                        <Users className="size-10 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white truncate mb-1">{artist.name}</h4>
+                      {artist.total_albums && (
+                        <p className="text-purple-400 text-xs">{artist.total_albums} albums</p>
+                      )}
+                      {artist.total_songs && (
+                        <p className="text-purple-400 text-xs">{artist.total_songs} songs</p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Songs Results */}
       {!isLoading && filteredSongs.length > 0 && (
         <section>
@@ -234,7 +282,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       )}
 
       {/* No Results */}
-      {!isLoading && filteredSongs.length === 0 && filteredAlbums.length === 0 && searchQuery && (
+      {!isLoading && filteredSongs.length === 0 && filteredAlbums.length === 0 && filteredArtists.length === 0 && searchQuery && (
         <div className="text-center py-12">
           <Music className="size-16 text-purple-500 mx-auto mb-4" />
           <h3 className="text-white text-xl mb-2">No results found</h3>
@@ -243,7 +291,7 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       )}
 
       {/* No Data Loaded */}
-      {!isLoading && allSongs.length === 0 && allAlbums.length === 0 && !error && (
+      {!isLoading && allSongs.length === 0 && allAlbums.length === 0 && allArtists.length === 0 && !error && (
         <div className="text-center py-12">
           <Music className="size-16 text-purple-500 mx-auto mb-4" />
           <h3 className="text-white text-xl mb-2">No music available</h3>

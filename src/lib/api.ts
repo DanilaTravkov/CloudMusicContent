@@ -1,6 +1,7 @@
 import type {
   SongsResponse,
   AlbumsResponse,
+  ArtistsResponse,
   SingleSongResponse,
   SingleAlbumResponse,
   AlbumSongsResponse,
@@ -298,4 +299,30 @@ export async function deleteAlbum(albumId: string, accessToken: string): Promise
   if (!response.ok) {
     await handleResponse<never>(response); // Will throw appropriate error
   }
+}
+
+// ============ ARTISTS ============
+
+/**
+ * Получить всех артистов с пагинацией
+ * GET /artists
+ */
+export async function getArtists(limit: number = 20, lastKey?: string): Promise<ArtistsResponse> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  if (lastKey) {
+    params.append('last_key', lastKey);
+  }
+
+  const url = `${API_GATEWAY}/artists?${params.toString()}`;
+  console.log('Fetching artists from:', url);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return handleResponse<ArtistsResponse>(response);
 }
