@@ -1,0 +1,64 @@
+// Типы данных соответствующие РЕАЛЬНОМУ API ответу
+
+export interface Song {
+  pk: string;
+  sk: string;
+  song_id: string;
+  title: string;
+  artist: string;
+  duration: string | number; // API возвращает строку, но может быть число
+  album: string; // например "Unknown" или название альбома
+  album_id?: string; // если указано
+  genre: string;
+  s3_key: string;
+  audio_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Album {
+  pk: string;
+  sk: string;
+  album_id: string;
+  title: string;
+  artist: string;
+  release_date: string;
+  genre: string;
+  description: string;
+  cover_image_url: string;
+  total_songs: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SongsResponse {
+  message: string;
+  count: number;
+  songs: Song[];
+  last_key: string | null;
+}
+
+export interface AlbumsResponse {
+  message: string;
+  count: number;
+  albums: Album[];
+  last_key: string | null;
+}
+
+export interface SingleSongResponse {
+  message: string;
+  song: Song;
+}
+
+export interface SingleAlbumResponse {
+  message: string;
+  album: Album;
+}
+
+export interface AlbumSongsResponse {
+  message: string;
+  album_id: string;
+  count: number;
+  songs: Song[];
+  last_key: string | null;
+}

@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Play, Music } from 'lucide-react';
-import { mockSongs, mockAlbums, mockArtists, type Song } from '../../lib/mockData';
+import { Play, Music, AlertCircle, Loader } from 'lucide-react';
+import { getSongs, getAlbums } from '../../lib/api';
+import type { Song, Album } from '../../types/music';
 import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
@@ -11,20 +13,47 @@ interface HomePageProps {
 }
 
 export function HomePage({ onPlaySong }: HomePageProps) {
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const getArtistNames = (artistIds: string[]) => {
-    return artistIds
-      .map(id => mockArtists.find(a => a.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
-  };  const handlePlaySong = (song: Song) => {
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [songsData, albumsData] = await Promise.all([
+          getSongs(5),
+          getAlbums(5),
+        ]);
+
+        setSongs(songsData.songs);
+        setAlbums(albumsData.albums);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
+        setError(errorMessage);
+        console.error('Error loading data:', {
+          error: err,
+          errorMessage,
+          apiUrl: import.meta.env.VITE_API_GATEWAY,
+        });
+        toast.error(`Failed to load music data: ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handlePlaySong = (song: Song) => {
     if (onPlaySong) {
       onPlaySong(song);
     } else {
-      // For standalone usage, show a toast notification
       toast.info(`Playing: ${song.title}`);
       console.log('Playing song:', song.title);
-      // You could add actual audio playback logic here
     }
   };
 
@@ -43,124 +72,123 @@ export function HomePage({ onPlaySong }: HomePageProps) {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="size-5 text-red-400 flex-shrink-0" />
+          <div>
+            <p className="text-white font-medium">Failed to load music</p>
+            <p className="text-red-200 text-sm">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="size-8 text-purple-400 animate-spin" />
+          <p className="text-white ml-3">Loading music...</p>
+        </div>
+      )}
+
       {/* Recently Added */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white text-2xl">Recently Added</h3>
-          <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
-            View All
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {mockSongs.slice(0, 5).map(song => (
-            <Card
-              key={song.id}
-              className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
-              onClick={() => handlePlaySong(song)}
-            >
-              <CardContent className="p-4">
-                <div className="relative mb-3">
-                  <div className="aspect-square rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
-                    {song.imageUrl ? (
-                      <img src={song.imageUrl} alt={song.title} className="size-full object-cover" />
-                    ) : (
+      {!isLoading && songs.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white text-2xl">Recently Added</h3>
+            <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
+              View All
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {songs.map(song => (
+              <Card
+                key={song.song_id}
+                className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+                onClick={() => handlePlaySong(song)}
+              >
+                <CardContent className="p-4">
+                  <div className="relative mb-3">
+                    <div className="aspect-square rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
                       <Music className="size-12 text-white" />
-                    )}
+                    </div>
+                    <Button
+                      size="sm"
+                      className="absolute bottom-2 right-2 size-10 rounded-full bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <Play className="size-4 fill-current" />
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    className="absolute bottom-2 right-2 size-10 rounded-full bg-purple-600 hover:bg-purple-700 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  >
-                    <Play className="size-4 fill-current" />
-                  </Button>
-                </div>
-                <h4 className="text-white truncate mb-1">{song.title}</h4>
-                <p className="text-purple-300 text-sm truncate">{getArtistNames(song.artistIds)}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                  <h4 className="text-white truncate mb-1">{song.title}</h4>
+                  <p className="text-purple-300 text-sm truncate">{song.artist}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Albums */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white text-2xl">Featured Albums</h3>
-          <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
-            View All
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockAlbums.map(album => (
-            <Card
-              key={album.id}
-              className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {album.imageUrl ? (
-                      <img src={album.imageUrl} alt={album.title} className="size-full object-cover" />
-                    ) : (
-                      <Music className="size-10 text-white" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-white truncate mb-1">{album.title}</h4>
-                    <p className="text-purple-300 text-sm truncate">{getArtistNames(album.artistIds)}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {album.genres.map(genre => (
-                        <Badge key={genre} variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
-                          {genre}
-                        </Badge>
-                      ))}
+      {!isLoading && albums.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white text-2xl">Featured Albums</h3>
+            <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
+              View All
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {albums.map(album => (
+              <Card
+                key={album.album_id}
+                className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {album.cover_image_url ? (
+                        <img src={album.cover_image_url} alt={album.title} className="size-full object-cover" />
+                      ) : (
+                        <Music className="size-10 text-white" />
+                      )}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white truncate mb-1">{album.title}</h4>
+                      <p className="text-purple-300 text-sm truncate">{album.artist}</p>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        <Badge variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
+                          {album.genre}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 rounded-full size-10"
+                      onClick={() => {
+                        if (songs.length > 0 && onPlaySong) {
+                          const song = songs[0];
+                          handlePlaySong(song);
+                        }
+                      }}
+                    >
+                      <Play className="size-4 fill-current" />
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 rounded-full size-10"
-                    onClick={() => {
-                      const firstSong = mockSongs.find(s => s.albumId === album.id);
-                      if (firstSong) handlePlaySong(firstSong);
-                    }}
-                  >
-                    <Play className="size-4 fill-current" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Popular Artists */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white text-2xl">Popular Artists</h3>
-          <Button variant="ghost" className="text-purple-300 hover:text-white hover:bg-white/10">
-            View All
-          </Button>
+      {/* No Data */}
+      {!isLoading && songs.length === 0 && albums.length === 0 && !error && (
+        <div className="text-center py-12">
+          <Music className="size-16 text-purple-500 mx-auto mb-4" />
+          <h3 className="text-white text-xl mb-2">No music available</h3>
+          <p className="text-purple-300">Check back soon for new content</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {mockArtists.map(artist => (
-            <Card
-              key={artist.id}
-              className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <CardContent className="p-4">
-                <div className="aspect-square rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden mb-3">
-                  {artist.imageUrl ? (
-                    <img src={artist.imageUrl} alt={artist.name} className="size-full object-cover" />
-                  ) : (
-                    <Music className="size-12 text-white" />
-                  )}
-                </div>
-                <h4 className="text-white text-center truncate">{artist.name}</h4>
-                <p className="text-purple-300 text-sm text-center">Artist</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>      </section>
+      )}
     </div>
   );
 
