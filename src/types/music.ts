@@ -5,9 +5,9 @@ export interface Song {
   sk: string;
   song_id: string;
   title: string;
-  artist: string;
+  artist_id: string;
+  artist_name: string;
   duration: string | number; // API возвращает строку, но может быть число
-  album: string; // например "Unknown" или название альбома
   album_id?: string; // если указано
   genre: string;
   s3_key: string;
@@ -21,7 +21,8 @@ export interface Album {
   sk: string;
   album_id: string;
   title: string;
-  artist: string;
+  artist_id: string;
+  artist_name: string;
   release_date: string;
   genre: string;
   description: string;

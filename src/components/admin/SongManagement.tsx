@@ -67,10 +67,9 @@ export function SongsManagement() {
 
   const handleOpenDialog = (song?: Song) => {
     if (song) {
-      setEditingSong(song);
-      setFormData({
+      setEditingSong(song);      setFormData({
         title: song.title,
-        artist: song.artist,
+        artist: song.artist_name, // Use artist_name from API response
         duration: String(song.duration),
         album_id: song.album_id || '',
         genre: song.genre,
@@ -233,10 +232,9 @@ export function SongsManagement() {
                   <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Select an album" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/20 text-white">
-                    {albums.map(album => (
+                  <SelectContent className="bg-slate-900 border-white/20 text-white">                    {albums.map(album => (
                       <SelectItem key={album.album_id} value={album.album_id}>
-                        {album.title} - {album.artist}
+                        {album.title} - {album.artist_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -308,11 +306,9 @@ export function SongsManagement() {
                 <div className="flex items-center gap-4">
                   <div className="size-16 rounded bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                     <Music className="size-8 text-white" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
+                  </div>                  <div className="flex-1 min-w-0">
                     <h3 className="text-white truncate">{song.title}</h3>
-                    <p className="text-purple-300 text-sm">{song.artist}</p>
+                    <p className="text-purple-300 text-sm">{song.artist_name}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                       <Badge variant="secondary" className="text-xs bg-indigo-900/50 text-indigo-200">
                         {getAlbumTitle(song.album_id)}
