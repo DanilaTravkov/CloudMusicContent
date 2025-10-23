@@ -7,13 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '../ui/badge';
 import { Plus, Edit, Trash2, Disc3, Music, AlertCircle, Loader } from 'lucide-react';
 import { getAlbums, createAlbum, updateAlbum, deleteAlbum } from '../../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Album } from '../../types/music';
 import { toast } from 'sonner';
 
-// Mock access token - в реальном приложении это будет из AuthContext
-const MOCK_ACCESS_TOKEN = 'mock-token-for-development';
-
 export function AlbumsManagement() {
+  const { accessToken } = useAuth();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
@@ -79,6 +78,11 @@ export function AlbumsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!accessToken) {
+      toast.error('You must be logged in to perform this action');
+      return;
+    }
+
     if (!formData.title || !formData.artist || !formData.release_date) {
       toast.error('Please fill in all required fields');
       return;
@@ -96,13 +100,13 @@ export function AlbumsManagement() {
       };
 
       if (editingAlbum) {
-        const result = await updateAlbum(editingAlbum.album_id, requestData, MOCK_ACCESS_TOKEN);
+        const result = await updateAlbum(editingAlbum.album_id, requestData, accessToken);
         setAlbums(prev =>
           prev.map(a => (a.album_id === editingAlbum.album_id ? result.album : a))
         );
         toast.success('Album updated successfully');
       } else {
-        const result = await createAlbum(requestData, MOCK_ACCESS_TOKEN);
+        const result = await createAlbum(requestData, accessToken);
         setAlbums(prev => [...prev, result.album]);
         toast.success('Album created successfully');
       }
@@ -119,12 +123,17 @@ export function AlbumsManagement() {
   };
 
   const handleDelete = async (album: Album) => {
+    if (!accessToken) {
+      toast.error('You must be logged in to perform this action');
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete "${album.title}"?`)) {
       return;
     }
 
     try {
-      await deleteAlbum(album.album_id, MOCK_ACCESS_TOKEN);
+      await deleteAlbum(album.album_id, accessToken);
       setAlbums(prev => prev.filter(a => a.album_id !== album.album_id));
       toast.success('Album deleted successfully');
     } catch (err) {

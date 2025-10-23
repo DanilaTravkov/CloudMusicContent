@@ -31,6 +31,19 @@ export interface Album {
   updated_at: string;
 }
 
+export interface Artist {
+  pk: string;
+  sk: string;
+  artist_id?: string;
+  name: string;
+  bio?: string;
+  image_url?: string;
+  total_albums?: number;
+  total_songs?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SongsResponse {
   message: string;
   count: number;
@@ -42,6 +55,13 @@ export interface AlbumsResponse {
   message: string;
   count: number;
   albums: Album[];
+  last_key: string | null;
+}
+
+export interface ArtistsResponse {
+  message: string;
+  count: number;
+  artists: Artist[];
   last_key: string | null;
 }
 

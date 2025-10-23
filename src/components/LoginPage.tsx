@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -19,16 +19,32 @@ export function LoginPage() {
   
   const from = location.state?.from?.pathname || '/dashboard';
 
+  // Handle registration success message
+  useEffect(() => {
+    if (location.state?.message) {
+      toast.success(location.state.message);
+      // Pre-fill username if provided
+      if (location.state.username) {
+        setUsername(location.state.username);
+      }
+      // Clear the state to prevent showing the message again
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
+      console.log('[LoginPage] Attempting login with username:', username);
       await login(username, password);
       toast.success('Login successful!');
       navigate(from, { replace: true });
     } catch (error) {
-      toast.error('Invalid credentials');
+      console.error('[LoginPage] Login error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Invalid credentials';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
