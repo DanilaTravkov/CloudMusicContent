@@ -10,6 +10,7 @@ import { AllSongsPage } from './components/user/AllSongsPage';
 import { AllAlbumsPage } from './components/user/AllAlbumsPage';
 import { AllArtistsPage } from './components/user/AllArtistsPage';
 import { ArtistDetailPage } from './components/user/ArtistDetailPage';
+import { AlbumDetailPage } from './components/user/AlbumDetailPage';
 import { NotificationsPage } from './components/user/NotificationsPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
   {
     path: '/albums',
     element: <AllAlbumsPage />,
+  },
+  {
+    path: '/albums/:albumId',
+    element: <AlbumDetailPage />,
   },
   {
     path: '/artists',

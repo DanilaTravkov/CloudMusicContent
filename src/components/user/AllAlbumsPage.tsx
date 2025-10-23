@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Search, Music, Play, AlertCircle, Loader } from 'lucide-react';
 import { getAlbums } from '../../lib/api';
-import type { Album, Song } from '../../types/music';
+import type { Album } from '../../types/music';
 import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
-interface AllAlbumsPageProps {
-  onPlaySong?: (song: Song) => void;
-}
-
-export function AllAlbumsPage({ onPlaySong }: AllAlbumsPageProps) {
+export function AllAlbumsPage() {
+  const navigate = useNavigate();
   const [allAlbums, setAllAlbums] = useState<Album[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -93,6 +91,11 @@ export function AllAlbumsPage({ onPlaySong }: AllAlbumsPageProps) {
               <Card
                 key={album.album_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+                onClick={() => {
+                  if (album.album_id) {
+                    navigate(`/albums/${album.album_id}`);
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-4">
@@ -111,6 +114,7 @@ export function AllAlbumsPage({ onPlaySong }: AllAlbumsPageProps) {
                     <Button
                       size="sm"
                       className="bg-purple-600 hover:bg-purple-700 rounded-full w-full"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Play className="size-4 fill-current mr-2" />
                       Play Album

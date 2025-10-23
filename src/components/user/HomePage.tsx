@@ -159,10 +159,15 @@ export function HomePage({ onPlaySong }: HomePageProps) {
               <Card
                 key={album.album_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
+                onClick={() => {
+                  if (album.album_id) {
+                    navigate(`/albums/${album.album_id}`);
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <div className="size-20 rounded-lg bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                       {album.cover_image_url ? (
                         <img src={album.cover_image_url} alt={album.title} className="size-full object-cover" />
                       ) : (
@@ -181,7 +186,8 @@ export function HomePage({ onPlaySong }: HomePageProps) {
                     <Button
                       size="sm"
                       className="bg-purple-600 hover:bg-purple-700 rounded-full size-10"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (songs.length > 0 && onPlaySong) {
                           const song = songs[0];
                           handlePlaySong(song);
