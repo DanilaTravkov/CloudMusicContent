@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -6,124 +6,143 @@ import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
-import { Edit, Trash2, Music, Upload, Play } from 'lucide-react';
-import { mockSongs, mockArtists, mockAlbums, mockGenres, type Song } from '../../lib/mockData';
+import { Edit, Trash2, Music, Upload, Play, AlertCircle, Loader } from 'lucide-react';
+import { getSongs, getAlbums, createSong, updateSong, deleteSong } from '../../lib/api';
+import type { Song, Album } from '../../types/music';
 import { toast } from 'sonner';
 
+// Mock access token - в реальном приложении это будет из AuthContext
+const MOCK_ACCESS_TOKEN = 'mock-token-for-development';
+
 export function SongsManagement() {
-  const [songs, setSongs] = useState<Song[]>(mockSongs);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    artistIds: [] as string[],
-    albumId: '',
-    genres: [] as string[],
-    imageUrl: '',
-    fileName: '',
-    fileType: 'audio/mpeg',
-    fileSize: '',
-    duration: ''
+    artist: '',
+    duration: '',
+    album_id: '',
+    genre: '',
   });
+
+  // Load songs and albums on mount
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [songsData, albumsData] = await Promise.all([
+        getSongs(100),
+        getAlbums(100),
+      ]);
+      setSongs(songsData.songs);
+      setAlbums(albumsData.albums);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
+      setError(errorMessage);
+      toast.error(`Failed to load: ${errorMessage}`);
+      console.error('Error loading data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
-      artistIds: [],
-      albumId: 'single',
-      genres: [],
-      imageUrl: '',
-      fileName: '',
-      fileType: 'audio/mpeg',
-      fileSize: '',
-      duration: ''
+      artist: '',
+      duration: '',
+      album_id: '',
+      genre: '',
     });
     setEditingSong(null);
   };
+
   const handleOpenDialog = (song?: Song) => {
     if (song) {
       setEditingSong(song);
       setFormData({
         title: song.title,
-        artistIds: song.artistIds,
-        albumId: song.albumId || 'single',
-        genres: song.genres,
-        imageUrl: song.imageUrl,
-        fileName: song.fileName,
-        fileType: song.fileType,
-        fileSize: song.fileSize,
-        duration: song.duration
+        artist: song.artist,
+        duration: String(song.duration),
+        album_id: song.album_id || '',
+        genre: song.genre,
       });
     } else {
       resetForm();
     }
     setIsDialogOpen(true);
   };
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const albumId = formData.albumId === 'single' ? undefined : formData.albumId;
-    
-    if (editingSong) {
-      setSongs(prev => prev.map(s => 
-        s.id === editingSong.id 
-          ? {
-              ...s,
-              ...formData,
-              albumId,
-              lastModified: new Date().toISOString()
-            }
-          : s
-      ));
-      toast.success('Song updated successfully');
-    } else {
-      const newSong: Song = {
-        id: `song-${Date.now()}`,
-        ...formData,
-        albumId,
-        createdAt: new Date().toISOString(),
-        lastModified: new Date().toISOString()
-      };
-      setSongs(prev => [...prev, newSong]);
-      toast.success('Song uploaded successfully');
+
+    if (!formData.title || !formData.artist || !formData.duration || !formData.album_id) {
+      toast.error('Please fill in all required fields');
+      return;
     }
-    
-    setIsDialogOpen(false);
-    resetForm();
+
+    try {
+      setIsSaving(true);
+
+      const requestData = {
+        title: formData.title,
+        artist: formData.artist,
+        duration: parseInt(formData.duration, 10),
+        album_id: formData.album_id,
+        genre: formData.genre || undefined,
+      };
+
+      if (editingSong) {
+        const result = await updateSong(editingSong.song_id, requestData, MOCK_ACCESS_TOKEN);
+        setSongs(prev =>
+          prev.map(s => (s.song_id === editingSong.song_id ? result.song : s))
+        );
+        toast.success('Song updated successfully');
+      } else {
+        const result = await createSong(requestData, MOCK_ACCESS_TOKEN);
+        setSongs(prev => [...prev, result.song]);
+        toast.success('Song created successfully');
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save song';
+      toast.error(errorMessage);
+      console.error('Error saving song:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = (songId: string) => {
-    setSongs(prev => prev.filter(s => s.id !== songId));
-    toast.success('Song deleted successfully');
-  };
+  const handleDelete = async (song: Song) => {
+    if (!confirm(`Are you sure you want to delete "${song.title}"?`)) {
+      return;
+    }
 
-  const toggleGenre = (genre: string) => {
-    setFormData(prev => ({
-      ...prev,
-      genres: prev.genres.includes(genre)
-        ? prev.genres.filter(g => g !== genre)
-        : [...prev.genres, genre]
-    }));
-  };
-
-  const toggleArtist = (artistId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      artistIds: prev.artistIds.includes(artistId)
-        ? prev.artistIds.filter(id => id !== artistId)
-        : [...prev.artistIds, artistId]
-    }));
-  };
-
-  const getArtistNames = (artistIds: string[]) => {
-    return artistIds
-      .map(id => mockArtists.find(a => a.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
+    try {
+      await deleteSong(song.song_id, MOCK_ACCESS_TOKEN);
+      setSongs(prev => prev.filter(s => s.song_id !== song.song_id));
+      toast.success('Song deleted successfully');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete song';
+      toast.error(errorMessage);
+      console.error('Error deleting song:', err);
+    }
   };
 
   const getAlbumTitle = (albumId?: string) => {
-    if (!albumId) return 'Single';
-    return mockAlbums.find(a => a.id === albumId)?.title || 'Unknown Album';
+    if (!albumId) return 'No album';
+    return albums.find(a => a.album_id === albumId)?.title || 'Unknown Album';
   };
 
   return (
@@ -135,9 +154,9 @@ export function SongsManagement() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
+            <Button
               onClick={() => handleOpenDialog()}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              className="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
             >
               <Upload className="size-4 mr-2" />
               Upload Song
@@ -164,125 +183,55 @@ export function SongsManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duration">Duration *</Label>
+                  <Label htmlFor="artist">Artist *</Label>
+                  <Input
+                    id="artist"
+                    value={formData.artist}
+                    onChange={(e) => setFormData(prev => ({ ...prev, artist: e.target.value }))}
+                    required
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duration (seconds) *</Label>
                   <Input
                     id="duration"
-                    placeholder="3:45"
+                    type="number"
                     value={formData.duration}
                     onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
                     required
                     className="bg-white/10 border-white/20 text-white"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="genre">Genre</Label>
+                  <Input
+                    id="genre"
+                    value={formData.genre}
+                    onChange={(e) => setFormData(prev => ({ ...prev, genre: e.target.value }))}
+                    className="bg-white/10 border-white/20 text-white"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Artists * (Select one or more)</Label>
-                <div className="flex flex-wrap gap-2">
-                  {mockArtists.map(artist => (
-                    <Badge
-                      key={artist.id}
-                      variant={formData.artistIds.includes(artist.id) ? 'default' : 'outline'}
-                      className={`cursor-pointer ${
-                        formData.artistIds.includes(artist.id)
-                          ? 'bg-purple-600 hover:bg-purple-700'
-                          : 'border-white/20 text-white hover:bg-white/10'
-                      }`}
-                      onClick={() => toggleArtist(artist.id)}
-                    >
-                      {artist.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>              <div className="space-y-2">
-                <Label htmlFor="albumId">Album (Optional - Leave empty for single)</Label>
-                <Select value={formData.albumId} onValueChange={(value) => setFormData(prev => ({ ...prev, albumId: value === 'single' ? '' : value }))}>
+                <Label htmlFor="album_id">Album *</Label>
+                <Select value={formData.album_id} onValueChange={(value) => setFormData(prev => ({ ...prev, album_id: value }))}>
                   <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Select an album or leave as single" />
+                    <SelectValue placeholder="Select an album" />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-900 border-white/20 text-white">
-                    <SelectItem value="single">Single (No Album)</SelectItem>
-                    {mockAlbums.map(album => (
-                      <SelectItem key={album.id} value={album.id}>
-                        {album.title}
+                    {albums.map(album => (
+                      <SelectItem key={album.album_id} value={album.album_id}>
+                        {album.title} - {album.artist}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Genres *</Label>
-                <div className="flex flex-wrap gap-2">
-                  {mockGenres.map(genre => (
-                    <Badge
-                      key={genre}
-                      variant={formData.genres.includes(genre) ? 'default' : 'outline'}
-                      className={`cursor-pointer ${
-                        formData.genres.includes(genre)
-                          ? 'bg-purple-600 hover:bg-purple-700'
-                          : 'border-white/20 text-white hover:bg-white/10'
-                      }`}
-                      onClick={() => toggleGenre(genre)}
-                    >
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="fileName">File Name *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="fileName"
-                    value={formData.fileName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fileName: e.target.value }))}
-                    placeholder="song-title.mp3"
-                    required
-                    className="bg-white/10 border-white/20 text-white"
-                  />
-                  <Button type="button" className="bg-purple-600 hover:bg-purple-700">
-                    <Upload className="size-4 mr-2" />
-                    Browse
-                  </Button>
-                </div>
-                <p className="text-xs text-purple-300">Metadata will be extracted from the file</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fileType">File Type</Label>
-                  <Input
-                    id="fileType"
-                    value={formData.fileType}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fileType: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white"
-                    readOnly
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fileSize">File Size</Label>
-                  <Input
-                    id="fileSize"
-                    placeholder="8.5 MB"
-                    value={formData.fileSize}
-                    onChange={(e) => setFormData(prev => ({ ...prev, fileSize: e.target.value }))}
-                    className="bg-white/10 border-white/20 text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">Cover Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder="https://example.com/cover.jpg"
-                  className="bg-white/10 border-white/20 text-white"
-                />
               </div>
 
               <div className="flex gap-2 justify-end pt-4">
@@ -296,9 +245,17 @@ export function SongsManagement() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  disabled={isSaving}
+                  className="bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                 >
-                  {editingSong ? 'Update Song' : 'Upload Song'}
+                  {isSaving ? (
+                    <>
+                      <Loader className="size-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    editingSong ? 'Update Song' : 'Create Song'
+                  )}
                 </Button>
               </div>
             </form>
@@ -306,70 +263,104 @@ export function SongsManagement() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
-        {songs.map(song => (
-          <Card key={song.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="size-16 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {song.imageUrl ? (
-                    <img src={song.imageUrl} alt={song.title} className="size-full object-cover" />
-                  ) : (
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3 mb-6">
+          <AlertCircle className="size-5 text-red-400 shrink-0" />
+          <div>
+            <p className="text-white font-medium">Failed to load songs</p>
+            <p className="text-red-200 text-sm">{error}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadData}
+            className="ml-auto border-red-500/50 text-red-400 hover:bg-red-500/10"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="size-8 text-purple-400 animate-spin" />
+          <p className="text-white ml-3">Loading songs...</p>
+        </div>
+      )}
+
+      {/* Songs List */}
+      {!isLoading && songs.length > 0 && (
+        <div className="grid grid-cols-1 gap-3">
+          {songs.map(song => (
+            <Card key={song.song_id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="size-16 rounded bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                     <Music className="size-8 text-white" />
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white truncate">{song.title}</h3>
-                  <p className="text-purple-300 text-sm">{getArtistNames(song.artistIds)}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs bg-indigo-900/50 text-indigo-200">
-                      {getAlbumTitle(song.albumId)}
-                    </Badge>
-                    {song.genres.map(genre => (
-                      <Badge key={genre} variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
-                        {genre}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white truncate">{song.title}</h3>
+                    <p className="text-purple-300 text-sm">{song.artist}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="secondary" className="text-xs bg-indigo-900/50 text-indigo-200">
+                        {getAlbumTitle(song.album_id)}
                       </Badge>
-                    ))}
+                      <Badge variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
+                        {song.genre}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="text-right text-sm text-purple-300 space-y-1">
+                    <div>
+                      {Math.floor(parseInt(String(song.duration), 10) / 60)}:
+                      {String(parseInt(String(song.duration), 10) % 60).padStart(2, '0')}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Play className="size-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenDialog(song)}
+                      className="border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Edit className="size-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(song)}
+                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="size-3" />
+                    </Button>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-                <div className="text-right text-sm text-purple-300 space-y-1">
-                  <div>{song.duration}</div>
-                  <div className="text-xs">{song.fileSize}</div>
-                  <div className="text-xs">{song.fileType}</div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-white/20 text-white hover:bg-white/10"
-                  >
-                    <Play className="size-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenDialog(song)}
-                    className="border-white/20 text-white hover:bg-white/10"
-                  >
-                    <Edit className="size-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDelete(song.id)}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* No Songs */}
+      {!isLoading && songs.length === 0 && !error && (
+        <div className="text-center py-12">
+          <Music className="size-16 text-purple-500 mx-auto mb-4" />
+          <h3 className="text-white text-xl mb-2">No songs yet</h3>
+          <p className="text-purple-300">Create your first song to get started</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '../ui/input';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Search, Music, Play, Users, Disc3 } from 'lucide-react';
-import { mockSongs, mockAlbums, mockArtists, mockGenres, type Song } from '../../lib/mockData';
+import { Search, Music, Play, AlertCircle, Loader } from 'lucide-react';
+import { getSongs, getAlbums } from '../../lib/api';
+import type { Song, Album } from '../../types/music';
 import { Layout } from '../Layout';
 import { toast } from 'sonner';
 
@@ -13,50 +14,70 @@ interface SearchPageProps {
 }
 
 export function SearchPage({ onPlaySong }: SearchPageProps) {
-  const [selectedGenre, setSelectedGenre] = useState<string>('');
-  const [selectedArtist, setSelectedArtist] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');  const handlePlaySong = (song: Song) => {
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [allAlbums, setAllAlbums] = useState<Album[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load all songs and albums on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [songsData, albumsData] = await Promise.all([
+          getSongs(100), // Load more for searching
+          getAlbums(100),
+        ]);
+
+        setAllSongs(songsData.songs);
+        setAllAlbums(albumsData.albums);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
+        setError(errorMessage);
+        toast.error('Failed to load music data');
+        console.error('Error loading data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handlePlaySong = (song: Song) => {
     if (onPlaySong) {
       onPlaySong(song);
     } else {
       toast.info(`Playing: ${song.title}`);
       console.log('Playing song:', song.title);
-      // Allow unauthorized users to play songs too
     }
   };
 
-  const getArtistNames = (artistIds: string[]) => {
-    return artistIds
-      .map(id => mockArtists.find(a => a.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
-  };
-
-  // Filter content based on selected genre and artist
-  const filteredSongs = mockSongs.filter(song => {
-    const matchesGenre = !selectedGenre || song.genres.includes(selectedGenre);
-    const matchesArtist = !selectedArtist || song.artistIds.includes(selectedArtist);
+  // Filter content based on search query
+  const filteredSongs = allSongs.filter(song => {
     const matchesSearch = !searchQuery || 
       song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getArtistNames(song.artistIds).toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGenre && matchesArtist && matchesSearch;
+      song.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      song.genre.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const filteredAlbums = mockAlbums.filter(album => {
-    const matchesGenre = !selectedGenre || album.genres.includes(selectedGenre);
-    const matchesArtist = !selectedArtist || album.artistIds.includes(selectedArtist);
+  const filteredAlbums = allAlbums.filter(album => {
     const matchesSearch = !searchQuery || 
       album.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getArtistNames(album.artistIds).toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGenre && matchesArtist && matchesSearch;
+      album.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      album.genre.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const filteredArtists = mockArtists.filter(artist => {
-    const matchesGenre = !selectedGenre || artist.genres.includes(selectedGenre);
-    const matchesSearch = !searchQuery || 
-      artist.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGenre && matchesSearch;
-  });
+  // Get unique genres from all songs
+  const uniqueGenres = Array.from(
+    new Set(allSongs.map(song => song.genre).filter(Boolean))
+  ).sort();
+
   const content = (
     <div className="space-y-6">
       {/* Search Header */}
@@ -75,105 +96,79 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
           />
         </div>
 
-        {/* Genre Filter */}
-        <div>
-          <h3 className="text-white mb-3">Filter by Genre</h3>
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant={!selectedGenre ? 'default' : 'outline'}
-              className={`cursor-pointer ${
-                !selectedGenre
-                  ? 'bg-purple-600 hover:bg-purple-700'
-                  : 'border-white/20 text-white hover:bg-white/10'
-              }`}
-              onClick={() => {
-                setSelectedGenre('');
-                setSelectedArtist('');
-              }}
-            >
-              All Genres
-            </Badge>
-            {mockGenres.map(genre => (
-              <Badge
-                key={genre}
-                variant={selectedGenre === genre ? 'default' : 'outline'}
-                className={`cursor-pointer ${
-                  selectedGenre === genre
-                    ? 'bg-purple-600 hover:bg-purple-700'
-                    : 'border-white/20 text-white hover:bg-white/10'
-                }`}
-                onClick={() => setSelectedGenre(genre)}
-              >
-                {genre}
-              </Badge>
-            ))}
+        {/* Genre Filter Info */}
+        {uniqueGenres.length > 0 && (
+          <div>
+            <h3 className="text-white mb-3">Available Genres</h3>
+            <div className="flex flex-wrap gap-2">
+              {uniqueGenres.map(genre => (
+                <Badge
+                  key={genre}
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white/10 cursor-pointer"
+                  onClick={() => setSearchQuery(genre)}
+                >
+                  {genre}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Artists in Selected Genre */}
-      {selectedGenre && (
-        <section>
-          <h3 className="text-white text-xl mb-3">Artists in {selectedGenre}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-            {filteredArtists.map(artist => (
-              <Card
-                key={artist.id}
-                className={`cursor-pointer transition-all ${
-                  selectedArtist === artist.id
-                    ? 'bg-purple-600/30 border-purple-500'
-                    : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
-                onClick={() => setSelectedArtist(selectedArtist === artist.id ? '' : artist.id)}
-              >
-                <CardContent className="p-3">
-                  <div className="aspect-square rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden mb-2">
-                    {artist.imageUrl ? (
-                      <img src={artist.imageUrl} alt={artist.name} className="size-full object-cover" />
-                    ) : (
-                      <Users className="size-8 text-white" />
-                    )}
-                  </div>
-                  <h4 className="text-white text-sm text-center truncate">{artist.name}</h4>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="size-5 text-red-400 shrink-0" />
+          <div>
+            <p className="text-white font-medium">Failed to load music</p>
+            <p className="text-red-200 text-sm">{error}</p>
           </div>
-        </section>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader className="size-8 text-purple-400 animate-spin" />
+          <p className="text-white ml-3">Loading music...</p>
+        </div>
       )}
 
       {/* Albums Results */}
-      {filteredAlbums.length > 0 && (
+      {!isLoading && filteredAlbums.length > 0 && (
         <section>
           <h3 className="text-white text-xl mb-3">
-            {selectedArtist ? `Albums by ${mockArtists.find(a => a.id === selectedArtist)?.name}` : 'Albums'}
+            Albums {searchQuery && `matching "${searchQuery}"`}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredAlbums.map(album => (
               <Card
-                key={album.id}
+                key={album.album_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {album.imageUrl ? (
-                        <img src={album.imageUrl} alt={album.title} className="size-full object-cover" />
+                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                      {album.cover_image_url ? (
+                        <img src={album.cover_image_url} alt={album.title} className="size-full object-cover" />
                       ) : (
-                        <Disc3 className="size-10 text-white" />
+                        <Music className="size-10 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate mb-1">{album.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{getArtistNames(album.artistIds)}</p>
-                      <p className="text-purple-400 text-xs mt-1">{album.songIds.length} tracks</p>
+                      <p className="text-purple-300 text-sm truncate">{album.artist}</p>
+                      <p className="text-purple-400 text-xs mt-1">{album.total_songs} tracks</p>
                     </div>
                     <Button
                       size="sm"
                       className="bg-purple-600 hover:bg-purple-700 rounded-full size-10"
                       onClick={() => {
-                        const firstSong = mockSongs.find(s => s.albumId === album.id);
-                        if (firstSong) handlePlaySong(firstSong);
+                        if (allSongs.length > 0 && onPlaySong) {
+                          const song = allSongs[0];
+                          handlePlaySong(song);
+                        }
                       }}
                     >
                       <Play className="size-4 fill-current" />
@@ -187,38 +182,41 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       )}
 
       {/* Songs Results */}
-      {filteredSongs.length > 0 && (
+      {!isLoading && filteredSongs.length > 0 && (
         <section>
-          <h3 className="text-white text-xl mb-3">Songs</h3>
+          <h3 className="text-white text-xl mb-3">
+            Songs {searchQuery && `matching "${searchQuery}"`}
+          </h3>
           <div className="space-y-2">
             {filteredSongs.map((song, index) => (
               <Card
-                key={song.id}
+                key={song.song_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
                 onClick={() => handlePlaySong(song)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-4">
                     <span className="text-purple-400 w-6 text-center">{index + 1}</span>
-                    <div className="size-12 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {song.imageUrl ? (
-                        <img src={song.imageUrl} alt={song.title} className="size-full object-cover" />
-                      ) : (
-                        <Music className="size-6 text-white" />
-                      )}
+                    <div className="size-12 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                      <Music className="size-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-white truncate">{song.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{getArtistNames(song.artistIds)}</p>
+                      <p className="text-purple-300 text-sm truncate">{song.artist}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-purple-300 text-sm">{song.duration}</p>
+                      <p className="text-purple-300 text-sm">
+                        {(() => {
+                          const duration = typeof song.duration === 'string' 
+                            ? parseInt(song.duration, 10) 
+                            : song.duration;
+                          return `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`;
+                        })()}
+                      </p>
                       <div className="flex gap-1 mt-1">
-                        {song.genres.slice(0, 2).map(genre => (
-                          <Badge key={genre} variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
-                            {genre}
-                          </Badge>
-                        ))}
+                        <Badge variant="secondary" className="text-xs bg-purple-900/50 text-purple-200">
+                          {song.genre}
+                        </Badge>
                       </div>
                     </div>
                     <Button
@@ -236,12 +234,22 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       )}
 
       {/* No Results */}
-      {filteredSongs.length === 0 && filteredAlbums.length === 0 && filteredArtists.length === 0 && (selectedGenre || selectedArtist || searchQuery) && (
+      {!isLoading && filteredSongs.length === 0 && filteredAlbums.length === 0 && searchQuery && (
         <div className="text-center py-12">
           <Music className="size-16 text-purple-500 mx-auto mb-4" />
           <h3 className="text-white text-xl mb-2">No results found</h3>
-          <p className="text-purple-300">Try adjusting your filters or search query</p>
-        </div>      )}
+          <p className="text-purple-300">Try adjusting your search query</p>
+        </div>
+      )}
+
+      {/* No Data Loaded */}
+      {!isLoading && allSongs.length === 0 && allAlbums.length === 0 && !error && (
+        <div className="text-center py-12">
+          <Music className="size-16 text-purple-500 mx-auto mb-4" />
+          <h3 className="text-white text-xl mb-2">No music available</h3>
+          <p className="text-purple-300">Check back soon for new content</p>
+        </div>
+      )}
     </div>
   );
 
