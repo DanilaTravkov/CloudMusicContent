@@ -99,18 +99,16 @@ export function ArtistDetailPage({ onPlaySong }: ArtistDetailPageProps) {
       {/* Artist Header */}
       {!isLoading && artist && (
         <div className="bg-white/5 border border-white/10 rounded-lg p-6">
-          <div className="flex items-center gap-6">
-            <div className="size-32 rounded-full bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
-              {artist.image_url ? (
-                <img src={artist.image_url} alt={artist.name} className="size-full object-cover" />
+          <div className="flex items-center gap-6">            <div className="size-32 rounded-full bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+              {artist.profile_image_url ? (
+                <img src={artist.profile_image_url} alt={artist.name} className="size-full object-cover" />
               ) : (
                 <Users className="size-16 text-white" />
               )}
-            </div>
-            <div>
+            </div>            <div>
               <h1 className="text-white text-4xl mb-2">{artist.name}</h1>
-              {artist.bio && (
-                <p className="text-purple-300 text-base mb-4 max-w-xl">{artist.bio}</p>
+              {artist.biography && (
+                <p className="text-purple-300 text-base mb-4 max-w-xl">{artist.biography}</p>
               )}
               <div className="flex gap-6 text-sm text-purple-400">
                 {artist.total_albums && <span>{artist.total_albums} Albums</span>}

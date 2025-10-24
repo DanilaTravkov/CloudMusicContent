@@ -130,7 +130,7 @@ export async function updateSong(
   songId: string,
   data: {
     title?: string;
-    artist?: string;
+    artist_id?: string;
     duration?: number;
     genre?: string;
   },
@@ -238,7 +238,7 @@ export async function getAlbumSongs(
 export async function createAlbum(
   data: {
     title: string;
-    artist: string;
+    artist_id: string;
     release_date?: string;
     genre?: string;
     description?: string;
@@ -266,7 +266,7 @@ export async function updateAlbum(
   albumId: string,
   data: {
     title?: string;
-    artist?: string;
+    artist_id?: string;
     release_date?: string;
     genre?: string;
     description?: string;

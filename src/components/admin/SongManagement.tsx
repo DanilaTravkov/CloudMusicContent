@@ -9,14 +9,14 @@ import { Badge } from '../ui/badge';
 import { Edit, Trash2, Music, Upload, Play, AlertCircle, Loader } from 'lucide-react';
 import { getSongs, getAlbums, createSong, updateSong, deleteSong, getArtists } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Song, Album } from '../../types/music';
+import type { Song, Album, Artist } from '../../types/music';
 import { toast } from 'sonner';
 
 export function SongsManagement() {
   const { accessToken, idToken } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
-  const [artists, setArtists] = useState<any[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +41,6 @@ export function SongsManagement() {
     script.async = true;
     document.head.appendChild(script);
   }, []);
-
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -63,7 +62,6 @@ export function SongsManagement() {
       setIsLoading(false);
     }
   };
-
   const resetForm = () => {
     setFormData({
       title: '',
@@ -182,9 +180,7 @@ export function SongsManagement() {
     if (!formData.title || !formData.artist_id || !formData.duration || !formData.album_id) {
       toast.error('Please fill in all required fields');
       return;
-    }
-
-    try {
+    }    try {
       setIsSaving(true);
 
       // Find selected artist name
@@ -230,7 +226,7 @@ export function SongsManagement() {
   };
 
   const handleDelete = async (song: Song) => {
-    if (!accessToken) {
+    if (!idToken || !accessToken) {
       toast.error('You must be logged in to perform this action');
       return;
     }
@@ -240,7 +236,7 @@ export function SongsManagement() {
     }
 
     try {
-      await deleteSong(song.song_id, accessToken);
+      await deleteSong(song.song_id, idToken);
       setSongs(prev => prev.filter(s => s.song_id !== song.song_id));
       toast.success('Song deleted successfully');
     } catch (err) {

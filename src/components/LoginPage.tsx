@@ -57,7 +57,7 @@ export function LoginPage() {
           <div className="bg-white/10 backdrop-blur-lg p-4 rounded-full mb-4">
             <Music2 className="size-12 text-white" />
           </div>
-          <h1 className="text-white text-4xl mb-2">StreamHub</h1>
+          <h1 className="text-white text-4xl mb-2">Stream</h1>
           <p className="text-purple-200">Your music, unlimited</p>
         </div>
 
