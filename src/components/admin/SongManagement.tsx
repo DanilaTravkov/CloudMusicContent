@@ -7,15 +7,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Edit, Trash2, Music, Upload, Play, AlertCircle, Loader } from 'lucide-react';
-import { getSongs, getAlbums, createSong, updateSong, deleteSong } from '../../lib/api';
+import { getSongs, getAlbums, createSong, updateSong, deleteSong, getArtists } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Song, Album } from '../../types/music';
 import { toast } from 'sonner';
 
 export function SongsManagement() {
-  const { accessToken } = useAuth();
+  const { accessToken, idToken } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [artists, setArtists] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,27 +24,36 @@ export function SongsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    artist: '',
+    artist_id: '',
     duration: '',
     album_id: '',
     genre: '',
   });
+  const [selectedFileName, setSelectedFileName] = useState<string>('');
 
-  // Load songs and albums on mount
+  // Load songs, albums, and jsmediatags library on mount
   useEffect(() => {
     loadData();
+    
+    // Загрузить jsmediatags библиотеку
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js';
+    script.async = true;
+    document.head.appendChild(script);
   }, []);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const [songsData, albumsData] = await Promise.all([
+      const [songsData, albumsData, artistsData] = await Promise.all([
         getSongs(100),
         getAlbums(100),
+        getArtists(100),
       ]);
       setSongs(songsData.songs);
       setAlbums(albumsData.albums);
+      setArtists(artistsData.artists);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
       setError(errorMessage);
@@ -57,19 +67,100 @@ export function SongsManagement() {
   const resetForm = () => {
     setFormData({
       title: '',
-      artist: '',
+      artist_id: '',
       duration: '',
       album_id: '',
       genre: '',
     });
+    setSelectedFileName('');
     setEditingSong(null);
+  };
+
+  const extractMetadataFromFile = (file: File): Promise<{
+    title?: string;
+    genre?: string;
+    duration?: string;
+  }> => {
+    return new Promise((resolve) => {
+      const jsmediatags = (window as any).jsmediatags;
+      
+      if (!jsmediatags) {
+        resolve({});
+        return;
+      }
+
+      jsmediatags.read(file, {
+        onSuccess: (tag: any) => {
+          const tags = tag.tags;
+          const metadata = {
+            title: tags.title || '',
+            genre: tags.genre || '',
+            duration: '',
+          };
+          resolve(metadata);
+        },
+        onError: () => {
+          resolve({});
+        },
+      });
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Сохраняем имя файла
+      setSelectedFileName(file.name);
+
+      // Проверка типа файла
+      if (!file.type.includes('audio')) {
+        toast.error('Please select an audio file');
+        return;
+      }
+
+      // Извлечение метаданных
+      const metadata = await extractMetadataFromFile(file);
+
+      // Попытка получить длительность через Audio element
+      const audio = new Audio();
+      const url = URL.createObjectURL(file);
+      
+      audio.onloadedmetadata = () => {
+        const duration = Math.round(audio.duration).toString();
+        setFormData(prev => ({
+          ...prev,
+          title: metadata.title || prev.title,
+          genre: metadata.genre || prev.genre,
+          duration: duration || prev.duration,
+        }));
+        URL.revokeObjectURL(url);
+        toast.success('Metadata extracted from file');
+      };
+
+      audio.onerror = () => {
+        setFormData(prev => ({
+          ...prev,
+          title: metadata.title || prev.title,
+          genre: metadata.genre || prev.genre,
+        }));
+        URL.revokeObjectURL(url);
+      };
+
+      audio.src = url;
+    } catch (error) {
+      toast.error('Failed to extract metadata from file');
+      console.error('Error extracting metadata:', error);
+    }
   };
 
   const handleOpenDialog = (song?: Song) => {
     if (song) {
-      setEditingSong(song);      setFormData({
+      setEditingSong(song);
+      setFormData({
         title: song.title,
-        artist: song.artist_name || song.artist || '',
+        artist_id: song.artist_id || '',
         duration: String(song.duration),
         album_id: song.album_id || '',
         genre: song.genre || '',
@@ -83,12 +174,12 @@ export function SongsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!accessToken) {
+    if (!accessToken || !idToken ) {
       toast.error('You must be logged in to perform this action');
       return;
     }
 
-    if (!formData.title || !formData.artist || !formData.duration || !formData.album_id) {
+    if (!formData.title || !formData.artist_id || !formData.duration || !formData.album_id) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -96,9 +187,20 @@ export function SongsManagement() {
     try {
       setIsSaving(true);
 
+      // Find selected artist name
+      const selectedArtist = artists.find(a => a.pk === formData.artist_id || a.artist_id === formData.artist_id);
+      const artistName = selectedArtist?.name || '';
+      
+      // Extract UUID from pk (format: ARTIST#uuid -> uuid)
+      let artistId = formData.artist_id;
+      if (formData.artist_id.startsWith('ARTIST#')) {
+        artistId = formData.artist_id.split('#')[1];
+      }
+
       const requestData = {
         title: formData.title,
-        artist: formData.artist,
+        artist_id: artistId,
+        artist: artistName,
         duration: parseInt(formData.duration, 10),
         album_id: formData.album_id,
         genre: formData.genre || undefined,
@@ -111,7 +213,7 @@ export function SongsManagement() {
         );
         toast.success('Song updated successfully');
       } else {
-        const result = await createSong(requestData, accessToken);
+        const result = await createSong(requestData, idToken);
         setSongs(prev => [...prev, result.song]);
         toast.success('Song created successfully');
       }
@@ -178,6 +280,32 @@ export function SongsManagement() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* File Upload Section */}
+              {!editingSong && (
+                <div className="space-y-2">
+                  <Label htmlFor="audio_file">Audio File (MP3) *</Label>
+                  <div className="relative">
+                    <Input
+                      id="audio_file"
+                      type="file"
+                      accept="audio/mpeg,audio/mp3"
+                      onChange={handleFileUpload}
+                      className="bg-white/10 border-white/20 text-white file:bg-purple-600 file:text-white file:border-0 file:mr-2"
+                    />
+                    {selectedFileName && (
+                      <p className="text-green-400 text-xs mt-1">
+                        ✓ File selected: {selectedFileName}
+                      </p>
+                    )}
+                    {!selectedFileName && (
+                      <p className="text-purple-300 text-xs mt-1">
+                        Upload an MP3 file to auto-fill title, artist, and genre
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Song Title *</Label>
@@ -192,13 +320,18 @@ export function SongsManagement() {
 
                 <div className="space-y-2">
                   <Label htmlFor="artist">Artist *</Label>
-                  <Input
-                    id="artist"
-                    value={formData.artist}
-                    onChange={(e) => setFormData(prev => ({ ...prev, artist: e.target.value }))}
-                    required
-                    className="bg-white/10 border-white/20 text-white"
-                  />
+                  <Select value={formData.artist_id} onValueChange={(value) => setFormData(prev => ({ ...prev, artist_id: value }))}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select an artist" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/20 text-white">
+                      {artists.map((artist) => (
+                        <SelectItem key={artist.pk} value={artist.pk}>
+                          {artist.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
