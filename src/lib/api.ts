@@ -101,20 +101,19 @@ export async function createSong(
   data: {
     title: string;
     artist_id: string;
-    artist?: string;
     duration: number;
     album_id: string;
     genre?: string;
     audio_file?: string;
     file_extension?: string;
   },
-  idToken: string
+  accessToken: string
 ): Promise<SingleSongResponse> {
   const response = await fetch(`${API_GATEWAY}/songs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${idToken}`,
+      'Authorization': `Bearer ${accessToken}`,
     },
     body: JSON.stringify(data),
   });
@@ -130,7 +129,7 @@ export async function updateSong(
   songId: string,
   data: {
     title?: string;
-    artist_id?: string;
+    artist?: string;
     duration?: number;
     genre?: string;
   },
