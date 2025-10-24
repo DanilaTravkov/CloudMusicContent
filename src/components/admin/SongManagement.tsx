@@ -7,15 +7,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Edit, Trash2, Music, Upload, Play, AlertCircle, Loader } from 'lucide-react';
-import { getSongs, getAlbums, createSong, updateSong, deleteSong } from '../../lib/api';
+import { getSongs, getAlbums, getArtists, createSong, updateSong, deleteSong } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Song, Album } from '../../types/music';
+import type { Song, Album, Artist } from '../../types/music';
 import { toast } from 'sonner';
 
 export function SongsManagement() {
-  const { accessToken } = useAuth();
+  const { accessToken, idToken } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<Song | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,7 +24,7 @@ export function SongsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    artist: '',
+    artist_id: '',
     duration: '',
     album_id: '',
     genre: '',
@@ -33,17 +34,18 @@ export function SongsManagement() {
   useEffect(() => {
     loadData();
   }, []);
-
   const loadData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const [songsData, albumsData] = await Promise.all([
+      const [songsData, albumsData, artistsData] = await Promise.all([
         getSongs(100),
         getAlbums(100),
+        getArtists(100),
       ]);
       setSongs(songsData.songs);
       setAlbums(albumsData.albums);
+      setArtists(artistsData.artists);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
       setError(errorMessage);
@@ -53,23 +55,22 @@ export function SongsManagement() {
       setIsLoading(false);
     }
   };
-
   const resetForm = () => {
     setFormData({
       title: '',
-      artist: '',
+      artist_id: '',
       duration: '',
       album_id: '',
       genre: '',
     });
     setEditingSong(null);
   };
-
   const handleOpenDialog = (song?: Song) => {
     if (song) {
-      setEditingSong(song);      setFormData({
+      setEditingSong(song);
+      setFormData({
         title: song.title,
-        artist: song.artist_name || song.artist || '',
+        artist_id: song.artist_id || '',
         duration: String(song.duration),
         album_id: song.album_id || '',
         genre: song.genre || '',
@@ -86,19 +87,15 @@ export function SongsManagement() {
     if (!accessToken) {
       toast.error('You must be logged in to perform this action');
       return;
-    }
-
-    if (!formData.title || !formData.artist || !formData.duration || !formData.album_id) {
+    }    if (!formData.title || !formData.artist_id || !formData.duration || !formData.album_id) {
       toast.error('Please fill in all required fields');
       return;
-    }
-
-    try {
+    }    try {
       setIsSaving(true);
 
       const requestData = {
         title: formData.title,
-        artist: formData.artist,
+        artist_id: formData.artist_id, // Send artist_id directly to match backend expectations
         duration: parseInt(formData.duration, 10),
         album_id: formData.album_id,
         genre: formData.genre || undefined,
@@ -128,7 +125,7 @@ export function SongsManagement() {
   };
 
   const handleDelete = async (song: Song) => {
-    if (!accessToken) {
+    if (!idToken || !accessToken) {
       toast.error('You must be logged in to perform this action');
       return;
     }
@@ -138,7 +135,7 @@ export function SongsManagement() {
     }
 
     try {
-      await deleteSong(song.song_id, accessToken);
+      await deleteSong(song.song_id, idToken);
       setSongs(prev => prev.filter(s => s.song_id !== song.song_id));
       toast.success('Song deleted successfully');
     } catch (err) {
@@ -188,17 +185,19 @@ export function SongsManagement() {
                     required
                     className="bg-white/10 border-white/20 text-white"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="artist">Artist *</Label>
-                  <Input
-                    id="artist"
-                    value={formData.artist}
-                    onChange={(e) => setFormData(prev => ({ ...prev, artist: e.target.value }))}
-                    required
-                    className="bg-white/10 border-white/20 text-white"
-                  />
+                </div>                <div className="space-y-2">
+                  <Label htmlFor="artist_id">Artist *</Label>
+                  <Select value={formData.artist_id} onValueChange={(value) => setFormData(prev => ({ ...prev, artist_id: value }))}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select an artist" />
+                    </SelectTrigger>                    <SelectContent className="bg-slate-900 border-white/20 text-white">
+                      {artists.map(artist => (
+                        <SelectItem key={artist.artist_id} value={artist.artist_id}>
+                          {artist.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

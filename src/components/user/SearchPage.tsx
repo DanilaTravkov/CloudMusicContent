@@ -74,17 +74,15 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
       (album.genre && album.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
-
   const filteredArtists = allArtists.filter(artist => {
     const matchesSearch = !searchQuery || 
       (artist.name && artist.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (artist.bio && artist.bio.toLowerCase().includes(searchQuery.toLowerCase()));
+      (artist.biography && artist.biography.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
-
   // Get unique genres from all songs
   const uniqueGenres = Array.from(
-    new Set(allSongs.map(song => song.genre).filter(Boolean))
+    new Set(allSongs.map(song => song.genre).filter((genre): genre is string => Boolean(genre)))
   ).sort();
 
   const content = (
@@ -202,10 +200,9 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
-                      {artist.image_url ? (
-                        <img src={artist.image_url} alt={artist.name} className="size-full object-cover" />
+                  <div className="flex items-center gap-4">                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                      {artist.profile_image_url ? (
+                        <img src={artist.profile_image_url} alt={artist.name} className="size-full object-cover" />
                       ) : (
                         <Users className="size-10 text-white" />
                       )}

@@ -29,7 +29,7 @@ export function Layout({ children, showNavigation = false }: LayoutProps) {
                 <Music2 className="size-6 text-white" />
               </div>
               <div>
-                <h1 className="text-white text-xl">StreamHub</h1>
+                <h1 className="text-white text-xl">Stream</h1>
                 <p className="text-purple-300 text-sm">Your music, unlimited</p>
               </div>
             </Link>

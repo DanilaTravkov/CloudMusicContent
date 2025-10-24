@@ -67,7 +67,7 @@ export function HomePage({ onPlaySong }: HomePageProps) {
       {/* Hero Section */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-purple-600 to-indigo-600 p-8 md:p-12">
         <div className="relative z-10">
-          <h2 className="text-white text-3xl md:text-4xl mb-4">Welcome to StreamHub</h2>
+          <h2 className="text-white text-3xl md:text-4xl mb-4">Welcome to Stream</h2>
           <p className="text-purple-100 text-lg mb-6 max-w-2xl">
             Discover new music, create playlists, and enjoy unlimited streaming of your favorite artists.
           </p>

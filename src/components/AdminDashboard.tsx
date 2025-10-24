@@ -29,7 +29,7 @@ export function AdminDashboard() {
                 <Music2 className="size-6 text-white" />
               </div>
               <div>
-                <h1 className="text-white text-xl">StreamHub Admin</h1>
+                <h1 className="text-white text-xl">Stream Admin</h1>
                 <p className="text-purple-300 text-sm">Content Management System</p>
               </div>
             </div>            

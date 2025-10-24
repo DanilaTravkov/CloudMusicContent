@@ -4,16 +4,18 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Plus, Edit, Trash2, Disc3, Music, AlertCircle, Loader } from 'lucide-react';
-import { getAlbums, createAlbum, updateAlbum, deleteAlbum } from '../../lib/api';
+import { getAlbums, getArtists, createAlbum, updateAlbum, deleteAlbum } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Album } from '../../types/music';
+import type { Album, Artist } from '../../types/music';
 import { toast } from 'sonner';
 
 export function AlbumsManagement() {
-  const { accessToken } = useAuth();
+  const { accessToken, idToken } = useAuth();
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,13 +23,14 @@ export function AlbumsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    artist: '',
+    artist_id: '',
     release_date: '',
     genre: '',
     description: '',
+    cover_image_url: '',
   });
 
-  // Load albums on mount
+  // Load albums and artists on mount
   useEffect(() => {
     loadData();
   }, []);
@@ -36,37 +39,43 @@ export function AlbumsManagement() {
     try {
       setIsLoading(true);
       setError(null);
-      const albumsData = await getAlbums(100);
+      const [albumsData, artistsData] = await Promise.all([
+        getAlbums(100),
+        getArtists(100),
+      ]);
       setAlbums(albumsData.albums);
+      setArtists(artistsData.artists);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load albums';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load data';
       setError(errorMessage);
       toast.error(`Failed to load: ${errorMessage}`);
-      console.error('Error loading albums:', err);
+      console.error('Error loading data:', err);
     } finally {
       setIsLoading(false);
     }
   };
-
   const resetForm = () => {
     setFormData({
       title: '',
-      artist: '',
+      artist_id: '',
       release_date: '',
       genre: '',
       description: '',
+      cover_image_url: '',
     });
     setEditingAlbum(null);
   };
 
   const handleOpenDialog = (album?: Album) => {
     if (album) {
-      setEditingAlbum(album);      setFormData({
+      setEditingAlbum(album);
+      setFormData({
         title: album.title,
-        artist: album.artist_name, // Use artist_name from the API response
+        artist_id: album.artist_id, // Use artist_id from the API response
         release_date: album.release_date || '',
         genre: album.genre || '',
         description: album.description || '',
+        cover_image_url: album.cover_image_url || '',
       });
     } else {
       resetForm();
@@ -77,35 +86,32 @@ export function AlbumsManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!accessToken) {
+    if (!accessToken || !idToken) {
       toast.error('You must be logged in to perform this action');
       return;
-    }
-
-    if (!formData.title || !formData.artist || !formData.release_date) {
+    }    if (!formData.title || !formData.artist_id || !formData.release_date) {
       toast.error('Please fill in all required fields');
       return;
-    }
-
-    try {
+    }    try {
       setIsSaving(true);
 
       const requestData = {
         title: formData.title,
-        artist: formData.artist,
+        artist_id: formData.artist_id, // Send artist_id directly to match backend expectations
         release_date: formData.release_date,
         genre: formData.genre || undefined,
         description: formData.description || undefined,
+        cover_image_url: formData.cover_image_url || undefined,
       };
 
       if (editingAlbum) {
-        const result = await updateAlbum(editingAlbum.album_id, requestData, accessToken);
+        const result = await updateAlbum(editingAlbum.album_id, requestData, idToken);
         setAlbums(prev =>
           prev.map(a => (a.album_id === editingAlbum.album_id ? result.album : a))
         );
         toast.success('Album updated successfully');
       } else {
-        const result = await createAlbum(requestData, accessToken);
+        const result = await createAlbum(requestData, idToken);
         setAlbums(prev => [...prev, result.album]);
         toast.success('Album created successfully');
       }
@@ -122,7 +128,7 @@ export function AlbumsManagement() {
   };
 
   const handleDelete = async (album: Album) => {
-    if (!accessToken) {
+    if (!accessToken || !idToken) {
       toast.error('You must be logged in to perform this action');
       return;
     }
@@ -132,7 +138,7 @@ export function AlbumsManagement() {
     }
 
     try {
-      await deleteAlbum(album.album_id, accessToken);
+      await deleteAlbum(album.album_id, idToken);
       setAlbums(prev => prev.filter(a => a.album_id !== album.album_id));
       toast.success('Album deleted successfully');
     } catch (err) {
@@ -177,17 +183,19 @@ export function AlbumsManagement() {
                     required
                     className="bg-white/10 border-white/20 text-white"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="artist">Artist *</Label>
-                  <Input
-                    id="artist"
-                    value={formData.artist}
-                    onChange={(e) => setFormData(prev => ({ ...prev, artist: e.target.value }))}
-                    required
-                    className="bg-white/10 border-white/20 text-white"
-                  />
+                </div>                <div className="space-y-2">
+                  <Label htmlFor="artist_id">Artist *</Label>
+                  <Select value={formData.artist_id} onValueChange={(value) => setFormData(prev => ({ ...prev, artist_id: value }))}>
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select an artist" />
+                    </SelectTrigger>                    <SelectContent className="bg-slate-900 border-white/20 text-white">
+                      {artists.map(artist => (
+                        <SelectItem key={artist.artist_id} value={artist.artist_id}>
+                          {artist.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -213,15 +221,24 @@ export function AlbumsManagement() {
                     className="bg-white/10 border-white/20 text-white"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
+              </div>              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Album description..."
+                  className="bg-white/10 border-white/20 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cover_image_url">Cover Image URL</Label>
+                <Input
+                  id="cover_image_url"
+                  value={formData.cover_image_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cover_image_url: e.target.value }))}
+                  placeholder="https://example.com/cover.jpg"
                   className="bg-white/10 border-white/20 text-white"
                 />
               </div>

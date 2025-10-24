@@ -37,10 +37,12 @@ export interface Album {
 export interface Artist {
   pk: string;
   sk: string;
-  artist_id?: string;
+  artist_id: string;
   name: string;
-  bio?: string;
-  image_url?: string;
+  biography?: string;
+  profile_image_url?: string;
+  genre?: string;
+  country?: string;
   total_albums?: number;
   total_songs?: number;
   created_at: string;
