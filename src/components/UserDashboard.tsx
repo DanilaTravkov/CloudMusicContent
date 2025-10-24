@@ -7,7 +7,7 @@ import { SearchPage } from './user/SearchPage';
 import { LibraryPage } from './user/LibraryPage';
 import { NotificationsPage } from './user/NotificationsPage';
 import { MusicPlayer } from './user/MusicPlayer';
-import { mockSongs, type Song } from '../lib/mockData';
+import { type Song } from '../types/music';
 import { useAuth } from '../contexts/AuthContext';
 
 type UserView = 'home' | 'search' | 'library' | 'notifications';
@@ -28,14 +28,13 @@ export function UserDashboard() {
     setCurrentSong(song);
     setIsPlaying(true);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-purple-950 to-slate-950 flex flex-col">
       <header className="bg-black/40 backdrop-blur-lg border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-lg">
+              <div className="bg-linear-to-br from-purple-500 to-indigo-600 p-2 rounded-lg">
                 <Music2 className="size-6 text-white" />
               </div>
               <div>
@@ -116,20 +115,17 @@ export function UserDashboard() {
         </div>
       </nav>
 
-      {currentSong && (
-        <MusicPlayer
+      {currentSong && (        <MusicPlayer
           song={currentSong}
           isPlaying={isPlaying}
           onPlayPause={() => setIsPlaying(!isPlaying)}
           onNext={() => {
-            const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
-            const nextSong = mockSongs[(currentIndex + 1) % mockSongs.length];
-            setCurrentSong(nextSong);
+            // For now, just stop playing since we don't have a proper playlist
+            setIsPlaying(false);
           }}
           onPrevious={() => {
-            const currentIndex = mockSongs.findIndex(s => s.id === currentSong.id);
-            const prevSong = mockSongs[(currentIndex - 1 + mockSongs.length) % mockSongs.length];
-            setCurrentSong(prevSong);
+            // For now, just stop playing since we don't have a proper playlist
+            setIsPlaying(false);
           }}
         />
       )}

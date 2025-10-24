@@ -154,15 +154,14 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                 key={album.album_id}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group"
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                <CardContent className="p-4">                  <div className="flex items-center gap-4">
+                    <div className="size-20 rounded-lg bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                       {album.cover_image_url ? (
                         <img src={album.cover_image_url} alt={album.title} className="size-full object-cover" />
                       ) : (
                         <Music className="size-10 text-white" />
                       )}
-                    </div>                    <div className="flex-1 min-w-0">
+                    </div><div className="flex-1 min-w-0">
                       <h4 className="text-white truncate mb-1">{album.title}</h4>
                       <p className="text-purple-300 text-sm truncate">{album.artist_name}</p>
                       <p className="text-purple-400 text-xs mt-1">{album.total_songs} tracks</p>
@@ -198,9 +197,8 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
               <Card
                 key={artist.pk}
                 className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">                    <div className="size-20 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+              >                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">                    <div className="size-20 rounded-lg bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                       {artist.profile_image_url ? (
                         <img src={artist.profile_image_url} alt={artist.name} className="size-full object-cover" />
                       ) : (
@@ -238,11 +236,10 @@ export function SearchPage({ onPlaySong }: SearchPageProps) {
                 onClick={() => handlePlaySong(song)}
               >
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-4">
-                    <span className="text-purple-400 w-6 text-center">{index + 1}</span>
-                    <div className="size-12 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="flex items-center gap-4">                    <span className="text-purple-400 w-6 text-center">{index + 1}</span>
+                    <div className="size-12 rounded bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
                       <Music className="size-6 text-white" />
-                    </div>                    <div className="flex-1 min-w-0">
+                    </div><div className="flex-1 min-w-0">
                       <h4 className="text-white truncate">{song.title}</h4>
                       <p className="text-purple-300 text-sm truncate">{song.artist_name || song.artist}</p>
                     </div>

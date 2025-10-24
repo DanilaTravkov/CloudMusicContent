@@ -6,19 +6,19 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardTitle, CardHeader } from '../ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Badge } from '../ui/badge';
-import { Plus, Edit, Trash2, Music2, AlertCircle, Loader, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, Loader, Users } from 'lucide-react';
 import { getArtists } from '../../lib/api';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import type { Artist } from '../../types/music';
 import { toast } from 'sonner';
 
 export function ArtistsManagement() {
-  const { accessToken } = useAuth();
+  // const { } = useAuth();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -128,6 +128,7 @@ export function ArtistsManagement() {
   };
 
   const handleDelete = async (artist: Artist) => {
+    console.log(artist)
     // For now, show a message that artist deletion is not yet implemented
     toast.error('Artist deletion functionality is not yet implemented in the API');
     

@@ -102,12 +102,6 @@ export function LoginPage() {
               >
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
-
-              <div className="text-center">
-                <p className="text-purple-200">
-                  Demo: Use "admin" for admin access, any other username for regular user
-                </p>
-              </div>
             </form>
 
             <div className="mt-6 text-center">

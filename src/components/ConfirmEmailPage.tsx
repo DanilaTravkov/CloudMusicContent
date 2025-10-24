@@ -3,15 +3,15 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Music2, ArrowLeft, Loader2, Mail, RefreshCw } from 'lucide-react';
+import { Music2, ArrowLeft, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { confirmEmail, register, type ConfirmRequest, type RegisterRequest } from '../lib/authApi';
+import { confirmEmail, type ConfirmRequest, type RegisterRequest } from '../lib/authApi';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from './ui/input-otp';
 
 export function ConfirmEmailPage() {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+//   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   
   const navigate = useNavigate();

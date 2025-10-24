@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Music } from 'lucide-react';
-import { mockArtists, type Song } from '../../lib/mockData';
+import { type Song } from '../../types/music';
 
 interface MusicPlayerProps {
   song: Song;
@@ -34,23 +34,25 @@ export function MusicPlayer({ song, isPlaying, onPlayPause, onNext, onPrevious }
 
     return () => clearInterval(interval);
   }, [isPlaying, onNext]);
-
   // Reset progress when song changes
   useEffect(() => {
     setProgress(0);
-  }, [song.id]);
-
-  const getArtistNames = (artistIds: string[]) => {
-    return artistIds
-      .map(id => mockArtists.find(a => a.id === id)?.name)
-      .filter(Boolean)
-      .join(', ');
-  };
-
+  }, [song.song_id]);
   const formatTime = (percentage: number) => {
-    // Convert song duration to seconds (assuming format like "3:45")
-    const [minutes, seconds] = song.duration.split(':').map(Number);
-    const totalSeconds = minutes * 60 + seconds;
+    // Handle both string and number duration formats
+    let totalSeconds: number;
+    if (typeof song.duration === 'string') {
+      // Assume format like "3:45" or convert string number to number
+      if (song.duration.includes(':')) {
+        const [minutes, seconds] = song.duration.split(':').map(Number);
+        totalSeconds = minutes * 60 + seconds;
+      } else {
+        totalSeconds = parseInt(song.duration, 10);
+      }
+    } else {
+      totalSeconds = song.duration;
+    }
+    
     const currentSeconds = Math.floor((totalSeconds * percentage) / 100);
     const mins = Math.floor(currentSeconds / 60);
     const secs = currentSeconds % 60;
@@ -68,27 +70,21 @@ export function MusicPlayer({ song, isPlaying, onPlayPause, onNext, onPrevious }
             max={100}
             step={0.1}
             className="w-full"
-          />
-          <div className="flex justify-between text-xs text-purple-300 mt-1">
+          />          <div className="flex justify-between text-xs text-purple-300 mt-1">
             <span>{formatTime(progress)}</span>
-            <span>{song.duration}</span>
+            <span>{formatTime(100)}</span>
           </div>
         </div>
 
         {/* Player Controls */}
         <div className="flex items-center justify-between gap-4">
-          {/* Song Info */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="size-14 rounded bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {song.imageUrl ? (
-                <img src={song.imageUrl} alt={song.title} className="size-full object-cover" />
-              ) : (
-                <Music className="size-6 text-white" />
-              )}
+          {/* Song Info */}          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="size-14 rounded bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden shrink-0">
+              <Music className="size-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <h4 className="text-white truncate">{song.title}</h4>
-              <p className="text-purple-300 text-sm truncate">{getArtistNames(song.artistIds)}</p>
+              <p className="text-purple-300 text-sm truncate">{song.artist_name || song.artist || 'Unknown Artist'}</p>
             </div>
             <Button
               size="sm"

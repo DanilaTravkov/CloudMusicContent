@@ -114,7 +114,7 @@ export function AlbumDetailPage() {
             <div className="flex-1 min-w-0 text-center md:text-left">
               <Badge className="bg-purple-600 text-white mb-2">ALBUM</Badge>
               <h1 className="text-white text-4xl font-bold mb-2">{album.title}</h1>
-              <p className="text-purple-300 text-lg mb-4">{album.artist}</p>
+              <p className="text-purple-300 text-lg mb-4">{album.artist_name}</p>
 
               {/* Album Stats */}
               <div className="flex flex-wrap gap-4 mb-4 justify-center md:justify-start">

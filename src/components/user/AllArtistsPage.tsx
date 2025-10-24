@@ -39,7 +39,7 @@ export function AllArtistsPage() {
   const filteredArtists = allArtists.filter(artist => {
     const matchesSearch = !searchQuery || 
       (artist.name && artist.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (artist.bio && artist.bio.toLowerCase().includes(searchQuery.toLowerCase()));
+      (artist.biography && artist.biography.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
 
@@ -99,8 +99,8 @@ export function AllArtistsPage() {
                 <CardContent className="p-3">
                   <div className="flex flex-col items-center gap-3">
                     <div className="size-16 rounded-full bg-linear-to-br from-purple-500 to-indigo-600 flex items-center justify-center overflow-hidden">
-                      {artist.image_url ? (
-                        <img src={artist.image_url} alt={artist.name} className="size-full object-cover" />
+                      {artist.profile_image_url ? (
+                        <img src={artist.profile_image_url} alt={artist.name} className="size-full object-cover" />
                       ) : (
                         <Users className="size-8 text-white" />
                       )}

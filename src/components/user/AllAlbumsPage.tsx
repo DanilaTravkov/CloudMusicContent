@@ -40,7 +40,7 @@ export function AllAlbumsPage() {
   const filteredAlbums = allAlbums.filter(album => {
     const matchesSearch = !searchQuery || 
       (album.title && album.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (album.artist && album.artist.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (album.artist_name && album.artist_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (album.genre && album.genre.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
   });
@@ -108,7 +108,7 @@ export function AllAlbumsPage() {
                     </div>
                     <div>
                       <h4 className="text-white truncate mb-1 font-semibold">{album.title}</h4>
-                      <p className="text-purple-300 text-sm truncate">{album.artist}</p>
+                      <p className="text-purple-300 text-sm truncate">{album.artist_name}</p>
                       <p className="text-purple-400 text-xs mt-1">{album.total_songs} tracks</p>
                     </div>
                     <Button
