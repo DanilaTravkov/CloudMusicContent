@@ -25,6 +25,8 @@ jobs:
 
       - name: Build React app
         run: yarn build
+        env:
+          VITE_API_GATEWAY: ${{ secrets.VITE_API_GATEWAY }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
